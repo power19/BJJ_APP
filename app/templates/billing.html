@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Invictus BJJ - {{ billing_info.customer.personal.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: white;
+    }
+
+    @media print {
+        .no-print { display: none; }
+        .print-only { display: block; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Title Section with logo -->
+    <div class="relative mb-8">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-900">{{ billing_info.customer.personal.name }}</h1>
+            <p class="text-gray-600">Member Billing Information</p>
+        </div>
+        
+        <img src="/static/images/invictus-bjj-logo-small.png" 
+             alt="Invictus BJJ" 
+             class="absolute top-0 right-0"
+             style="height: 100px; width: auto;">
+    </div>
+
+    <!-- Personal Information -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Personal Information</h2>
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Name</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.personal.name }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.personal.email }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Phone</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.personal.phone }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Address</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.personal.address }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Membership Information -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Membership Information</h2>
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Belt Rank</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.membership.belt_rank }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Registration Fee</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.membership.registration_fee }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Total Classes</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ billing_info.customer.membership.attendance }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Billing Summary -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Billing Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-500">Total Invoices</div>
+                <div class="mt-1 text-xl font-semibold text-gray-900">{{ billing_info.billing_summary.total_invoices }}</div>
+            </div>
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-500">Total Amount</div>
+                <div class="mt-1 text-xl font-semibold text-gray-900">{{ billing_info.billing_summary.total_amount }}</div>
+            </div>
+            <div class="bg-white shadow rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-500">Outstanding Amount</div>
+                <div class="mt-1 text-xl font-semibold text-text-gray-900">{{ billing_info.billing_summary.outstanding_amount }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Transaction History</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Outstanding</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for tx in billing_info.transactions %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tx.date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tx.number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tx.amount }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tx.outstanding }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ tx.status }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Print Button -->
+    <div class="fixed bottom-8 right-8 no-print">
+        <button onclick="window.print()" 
+                class="bg-gray-800 text-white rounded-full p-4 shadow-lg hover:bg-gray-700 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Debug Information (remove in production) -->
+    {% if debug %}
+    <div class="mt-8 p-4 bg-gray-100 rounded">
+        <h3 class="text-lg font-bold mb-2">Debug Information</h3>
+        <pre class="text-xs overflow-auto">{{ billing_info | tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

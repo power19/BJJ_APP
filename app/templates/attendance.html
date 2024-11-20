@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="/static/css/attendance.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="header-container">
+        <div class="customer-info">
+            {% if attendance_info.customer.image %}
+                <img src="/api/v1/files/file/{{ attendance_info.customer.image }}" 
+                     alt="Customer Image" 
+                     class="profile-image">
+            {% endif %}
+            <div>
+                <h1 class="text-3xl font-bold">{{ attendance_info.customer.name }}</h1>
+                <p class="text-lg text-gray-600">Current Belt Rank: {{ attendance_info.customer.belt_rank }}</p>
+            </div>
+        </div>
+        <img src="/static/images/invictus-bjj-logo-small.png" 
+             alt="Invictus BJJ"
+             class="logo-image">
+    </div>
+
+    <!-- Week Navigation -->
+    <div class="week-nav">
+        <div class="flex items-center gap-4">
+            <h2 class="text-xl font-bold">Week of {{ attendance_info.week_info.start_date }}</h2>
+            <a href="?week_offset={{ week_offset + 1 }}" class="nav-link">Next Week ›</a>
+            {% if attendance_info.week_info.current_week %}
+                <span class="current-week-badge">Current Week</span>
+            {% endif %}
+            <a href="?week_offset={{ week_offset - 1 }}" class="nav-link">‹ Previous Week</a>
+
+        </div>
+    </div>
+
+    <!-- Attendance Table -->
+    <table class="attendance-table">
+        <tbody>
+            {% for day in attendance_info.calendar %}
+            <tr class="day-row {% if day.attended %}attended{% endif %}">
+                <td class="day-cell day-name">{{ day.day_name }}</td>
+                <td class="day-cell">
+                    <div class="flex items-center">
+                        <span class="text-lg mr-4">{{ day.day }}</span>
+                        {% if day.attended %}
+                            {% for time in day.times %}
+                                <span class="attendance-time">{{ time }}</span>
+                            {% endfor %}
+                            <span class="check-mark"><i class="fas fa-check"></i></span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Summary Section -->
+    <div class="summary-section">
+        <div class="summary-item">
+            <span class="summary-label">Total Classes</span>
+            <span class="summary-value">{{ attendance_info.summary.total_classes }}</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Classes This Week</span>
+            <span class="summary-value">{{ attendance_info.summary.classes_this_week }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-center mb-6">Payment Processing</h1>
+        
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="text-center mb-6">
+            <p class="text-gray-600">Please scan customer's RFID card</p>
+            <div id="scanStatus" class="mt-2 text-sm"></div>
+        </div>
+        
+        <input type="password" 
+               id="rfidInput" 
+               class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+               placeholder="RFID Input"
+               autocomplete="off">
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rfidInput = document.getElementById('rfidInput');
+    const scanStatus = document.getElementById('scanStatus');
+    
+    rfidInput.focus();
+    
+    rfidInput.addEventListener('input', async function() {
+        const rfid = this.value;
+        if (rfid.length >= 8) {
+            scanStatus.textContent = 'Processing...';
+            
+            try {
+                const response = await fetch('/api/v1/payment/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rfid: rfid })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = `/api/v1/payment/process/${data.session_id}`;
+                } else {
+                    scanStatus.textContent = data.detail || 'Error processing card';
+                    rfidInput.value = '';
+                }
+            } catch (error) {
+                scanStatus.textContent = 'Error processing card';
+                rfidInput.value = '';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

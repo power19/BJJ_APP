@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Invoice Selection{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Customer Info Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {{ customer.customer.customer_name }}
+                    </h1>
+                    {% if customer.customer.custom_current_belt_rank %}
+                        <p class="text-gray-600">Belt Rank: {{ customer.customer.custom_current_belt_rank }}</p>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <p class="text-gray-600">Session expires in: <span id="timer">30s</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoices Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Outstanding Invoices</h2>
+            
+            <div class="space-y-4">
+                {% for tx in transactions %}
+                <div class="border rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   id="invoice-{{ tx.data.name }}" 
+                                   class="invoice-checkbox h-5 w-5 text-blue-600"
+                                   value="{{ tx.data.name }}"
+                                   data-amount="{{ tx.data.outstanding_amount }}">
+                            <label for="invoice-{{ tx.data.name }}" class="ml-3">
+                                <span class="block text-sm font-medium text-gray-900">
+                                    Invoice #{{ tx.data.name }}
+                                </span>
+                                <span class="block text-sm text-gray-500">
+                                    Due: {{ tx.data.due_date }}
+                                </span>
+                            </label>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-medium text-gray-900">
+                                SRD {{ "%.2f"|format(tx.data.outstanding_amount) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Total and Actions -->
+            <div class="mt-6 border-t pt-4">
+                <div class="flex justify-between items-center text-lg font-bold">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount">0.00</span>
+                </div>
+            </div>
+
+            <!-- Staff Authorization Section -->
+            <div id="authSection" class="mt-6" style="display: none;">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">
+                        Staff Authorization Required
+                    </h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="password" 
+                               id="staffRfid"
+                               class="flex-1 p-2 border rounded"
+                               placeholder="Scan staff card"
+                               autocomplete="off">
+                        <div id="authStatus" class="text-gray-500">
+                            Waiting for staff card...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="proceedButton"
+                    class="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                Proceed to Payment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Fields -->
+<input type="hidden" id="customerName" value="{{ customer.customer.customer_name }}">
+<input type="hidden" id="sessionId" value="{{ session_id }}">
+
+<!-- JavaScript -->
+<script src="/static/js/payment.js"></script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Confirmation{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Payment Summary</h2>
+                <p class="text-gray-600">Receipt #{{ receipt_number }}</p>
+            </div>
+
+            <div class="border-t border-b py-4 mb-6">
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Customer:</span>
+                    <span class="font-medium">{{ customer.name }}</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-600">Date:</span>
+                    <span class="font-medium">{{ current_date }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Time:</span>
+                    <span class="font-medium">{{ current_time }}</span>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                {% for invoice in selected_invoices %}
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Invoice #{{ invoice.number }}</span>
+                    <span class="font-medium">{{ invoice.amount }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="border-t pt-4 mb-6">
+                <div class="flex justify-between text-lg font-bold">
+                    <span>Total Amount:</span>
+                    <span>{{ total_amount }}</span>
+                </div>
+            </div>
+
+            <div class="text-center mb-6">
+                <p class="text-gray-600">Please scan staff card to confirm payment</p>
+                <p class="text-sm text-gray-500">Session expires in <span id="timer">30</span> seconds</p>
+            </div>
+
+            <div class="text-center">
+                <div class="inline-block p-6 bg-gray-50 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-500">Waiting for staff card...</p>
+            </div>
+        </div>
+    </div>
+</div>

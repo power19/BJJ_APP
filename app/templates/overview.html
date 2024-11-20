@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-600">Total Outstanding</h3>
+            <p class="text-3xl font-bold text-blue-600">${{ "%.2f"|format(totals.get('total', 0)) }}</p>
+            <p class="text-sm text-gray-500 mt-2">Total unpaid invoices: {{ (invoices.get('overdue', []) + invoices.get('unpaid', [])) | length }}</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-red-600">Overdue</h3>
+            <p class="text-3xl font-bold text-red-600">${{ "%.2f"|format(totals.get('overdue', 0)) }}</p>
+            <p class="text-sm text-gray-500 mt-2">Overdue invoices: {{ invoices.get('overdue', []) | length }}</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-yellow-600">Upcoming Due</h3>
+            <p class="text-3xl font-bold text-yellow-600">${{ "%.2f"|format(totals.get('unpaid', 0)) }}</p>
+            <p class="text-sm text-gray-500 mt-2">Upcoming invoices: {{ invoices.get('unpaid', []) | length }}</p>
+        </div>
+    </div>
+
+    <!-- Overdue Invoices -->
+    {% if invoices.get('overdue', []) %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Overdue Invoices</h2>
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days Overdue</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for invoice in invoices.get('overdue', []) %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-900">{{ invoice.customer_name }}</span>
+                                    {% if invoice.get('customer_details', {}).get('phone') %}
+                                    <span class="text-xs text-gray-500">📱 {{ invoice.customer_details.phone }}</span>
+                                    {% endif %}
+                                    {% if invoice.get('customer_details', {}).get('email') %}
+                                    <span class="text-xs text-gray-500">✉️ {{ invoice.customer_details.email }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if invoice.family_group %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ invoice.family_package }}
+                                </span>
+                                {% if invoice.family_group %}
+                                <p class="text-xs text-gray-500 mt-1">Group: {{ invoice.family_group }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ invoice.invoice_number }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-red-600 font-medium">{{ invoice.due_date }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if invoice.days_overdue > 30 %}bg-red-100 text-red-800
+                                    {% elif invoice.days_overdue > 15 %}bg-orange-100 text-orange-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ invoice.days_overdue }} days
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${{ "%.2f"|format(invoice.outstanding) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <a href="/api/v1/payment" class="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100">
+                                        💰 Pay
+                                    </a>
+                                    <a href="/api/v1/billing/customer/{{ invoice.customer_name }}" 
+                                       class="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
+                                        👁️ View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Unpaid Invoices -->
+    {% if invoices.get('unpaid', []) %}
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Upcoming Due Invoices</h2>
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due In</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for invoice in invoices.get('unpaid', []) %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-gray-900">{{ invoice.customer_name }}</span>
+                                    {% if invoice.get('customer_details', {}).get('phone') %}
+                                    <span class="text-xs text-gray-500">📱 {{ invoice.customer_details.phone }}</span>
+                                    {% endif %}
+                                    {% if invoice.get('customer_details', {}).get('email') %}
+                                    <span class="text-xs text-gray-500">✉️ {{ invoice.customer_details.email }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if invoice.family_group %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ invoice.family_package }}
+                                </span>
+                                {% if invoice.family_group %}
+                                <p class="text-xs text-gray-500 mt-1">Group: {{ invoice.family_group }}</p>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ invoice.invoice_number }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium">{{ invoice.due_date }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if invoice.days_until_due <= 3 %}bg-yellow-100 text-yellow-800
+                                    {% elif invoice.days_until_due <= 7 %}bg-green-100 text-green-800
+                                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                    {{ invoice.days_until_due }} days
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${{ "%.2f"|format(invoice.outstanding) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <a href="/api/v1/payment" class="px-3 py-1 bg-green-50 text-green-700 rounded-md hover:bg-green-100">
+                                        💰 Pay
+                                    </a>
+                                    <a href="/api/v1/billing/customer/{{ invoice.customer_name }}" 
+                                       class="px-3 py-1 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
+                                        👁️ View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}  

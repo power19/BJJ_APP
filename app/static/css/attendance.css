@@ -1,0 +1,107 @@
+/* app/static/css/attendance.css */
+
+/* Header Layout */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.customer-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.profile-image {
+    height: 120px !important;
+    width: 120px !important;
+    object-fit: cover !important;
+    border-radius: 9999px;
+}
+
+.logo-image {
+    height: 120px !important;
+    width: auto !important;
+}
+
+/* Week Navigation */
+.week-nav {
+    margin-bottom: 1.5rem;
+}
+
+.nav-link {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
+
+.current-week-badge {
+    background-color: #dbeafe;
+    color: #1e40af;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    margin-left: 0.5rem;
+}
+
+/* Attendance Table */
+.attendance-table {
+    width: 100%;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.day-row {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.day-row.attended {
+    background-color: #f0fdf4;
+}
+
+.day-cell {
+    padding: 1rem 1.5rem;
+}
+
+.day-name {
+    width: 8rem;
+    font-weight: 500;
+}
+
+.attendance-time {
+    color: #4b5563;
+    margin-right: 0.5rem;
+}
+
+.check-mark {
+    color: #10b981;
+    margin-left: auto;
+}
+
+/* Summary Section */
+.summary-section {
+    margin-top: 2rem;
+    display: flex;
+    gap: 2rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-label {
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.summary-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
