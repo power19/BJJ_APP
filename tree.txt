@@ -1,0 +1,101 @@
+Folder PATH listing
+Volume serial number is 7E2E-A81C
+C:.
+�   main.py
+�   requirements.txt
+�   tree.txt
+�   
++---app
+�   �   __init__.py
+�   �   
+�   +---models
+�   �   �   billing.py
+�   �   �   customer.py
+�   �   �   __init__.py
+�   �   �   
+�   �   +---__pycache__
+�   �           customer.cpython-312.pyc
+�   �           __init__.cpython-312.pyc
+�   �           
+�   +---routes
+�   �   �   attendance.py
+�   �   �   billing.py
+�   �   �   customers.py
+�   �   �   files.py
+�   �   �   main.py
+�   �   �   overview.py
+�   �   �   payment.py
+�   �   �   __init__.py
+�   �   �   
+�   �   +---__pycache__
+�   �           attendance.cpython-312.pyc
+�   �           billing.cpython-312.pyc
+�   �           customers.cpython-312.pyc
+�   �           files.cpython-312.pyc
+�   �           main.cpython-312.pyc
+�   �           overview.cpython-312.pyc
+�   �           payment.cpython-312.pyc
+�   �           __init__.cpython-312.pyc
+�   �           
+�   +---services
+�   �   �   attendance_service.py
+�   �   �   billing_service.py
+�   �   �   payment_service.py
+�   �   �   __init__.py
+�   �   �   
+�   �   +---__pycache__
+�   �           attendance_service.cpython-312.pyc
+�   �           billing_service.cpython-312.pyc
+�   �           payment_service.cpython-312.pyc
+�   �           __init__.cpython-312.pyc
+�   �           
+�   +---static
+�   �   �   favicon.ico
+�   �   �   
+�   �   +---css
+�   �   �       attendance.css
+�   �   �       base.css
+�   �   �       index.css
+�   �   �       payment.css
+�   �   �       style.css
+�   �   �       
+�   �   +---images
+�   �   �       invictus-bjj-logo-small.png
+�   �   �       invictus-bjj-logo.png
+�   �   �       
+�   �   +---js
+�   �           billing.js
+�   �           index.js
+�   �           payment.js
+�   �           
+�   +---templates
+�   �   �   attendance.html
+�   �   �   base.html
+�   �   �   billing.html
+�   �   �   index.html
+�   �   �   overview.html
+�   �   �   
+�   �   +---payment
+�   �           details.html
+�   �           history.html
+�   �           invoice_selection.html
+�   �           payment_confirmation.html
+�   �           scan_customer.html
+�   �           scan_result.html
+�   �           success.html
+�   �           
+�   +---utils
+�   �   �   db.py
+�   �   �   erp_client.py
+�   �   �   __init__.py
+�   �   �   
+�   �   +---__pycache__
+�   �           erp_client.cpython-312.pyc
+�   �           __init__.cpython-312.pyc
+�   �           
+�   +---__pycache__
+�           __init__.cpython-312.pyc
+�           
++---__pycache__
+        main.cpython-312.pyc
+        

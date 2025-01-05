@@ -158,19 +158,19 @@ class ERPNextClient:
                         print(f"Family members: {json.dumps(family_members, indent=2)}")
                         
                         for member in family_members:
-                            print(f"Checking member: {member.get('member')} against {customer_name}")
-                            if member.get('member') == customer_name:
+                            print(f"Checking member: {member.get('member_name')} against {customer_name}")
+                            if member.get('member_name') == customer_name:
                                 print(f"Found as family member in: {group_data.get('name')}")
                                 return group_data
-                
+                    
                 print("No matching family group found")
                 return None
-                
+                    
             else:
                 print(f"Error getting family groups: {response.status_code}")
                 print(f"Error response: {response.text}")
                 return None
-                
+                    
         except Exception as e:
             print(f"Error getting family group: {str(e)}")
             print(f"Error type: {type(e)}")
@@ -265,35 +265,21 @@ class ERPNextClient:
                 "error": str(e)
             }
 
-    def get_customer_transactions(self, customer_name: str) -> Dict[str, Any]:
+    def get_customer_transactions(self, payer_name: str) -> Dict[str, Any]:
         """Get all transactions and details for a customer"""
         try:
-            print(f"\nFetching transactions for customer: {customer_name}")
+            print(f"\nFetching transactions for customer: {payer_name}")
             
-            # First get customer details
-            customer = self.search_customer_by_name(customer_name)
-            if not customer:
-                print(f"No customer found with name: {customer_name}")
-                return {"data": []}
-                    
-            print(f"Found customer: {customer.get('customer_name')}")
-
-            # Check if customer is part of a family group
-            family_group = self.get_family_group(customer_name)
-            if family_group and family_group.get('primary_payer') != customer_name:
-                # If customer is a family member, get primary payer's transactions
-                print(f"Customer is family member, getting primary payer's transactions")
-                customer_name = family_group.get('primary_payer')
-                print(f"Using primary payer: {customer_name}")
-
-            # Get invoices using the working API method
+            # Get sales invoices using client API method
             api_endpoint = f"{self.base_url}/api/method/frappe.client.get_list"
             params = {
                 'doctype': 'Sales Invoice',
                 'fields': '["*"]',
                 'filters': json.dumps({
-                    'customer': customer_name
-                })
+                    'customer': payer_name,
+                    'docstatus': 1  # Only submitted invoices
+                }),
+                'order_by': 'due_date desc'
             }
             
             response = self.session.get(api_endpoint, params=params)
@@ -302,33 +288,17 @@ class ERPNextClient:
 
             if response.status_code == 200:
                 data = response.json()
-                transactions = []
-                
-                for inv in data.get('message', []):
-                    transactions.append({
-                        'type': 'Sales Invoice',
-                        'data': {
-                            'name': inv.get('name'),
-                            'posting_date': inv.get('posting_date'),
-                            'due_date': inv.get('due_date'),
-                            'grand_total': inv.get('grand_total', 0.0),
-                            'outstanding_amount': inv.get('outstanding_amount', 0.0),
-                            'status': inv.get('status', 'Unknown'),
-                            'remarks': inv.get('remarks', '')
-                        }
-                    })
-                    
-                print(f"Found {len(transactions)} transactions")
-                return {"data": transactions}
+                print(f"Found {len(data.get('message', []))} transactions")
+                return data
                 
             print(f"No transactions found, status code: {response.status_code}")
-            return {"data": []}
+            return {"message": []}
 
         except Exception as e:
             print(f"Error in get_customer_transactions: {str(e)}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
-            return {"data": []}
+            return {"message": []}
 
 def get_erp_client():
     return ERPNextClient(

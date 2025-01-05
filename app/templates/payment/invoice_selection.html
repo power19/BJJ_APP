@@ -1,7 +1,4 @@
-<!-- app/templates/payment/invoice_selection.html -->
 {% extends "base.html" %}
-
-{% block title %}Payment - Invoice Selection{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -11,10 +8,10 @@
             <div class="flex justify-between items-start">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        {{ customer.customer.customer_name }}
+                        {{ customer.customer_name }}
                     </h1>
-                    {% if customer.customer.custom_current_belt_rank %}
-                        <p class="text-gray-600">Belt Rank: {{ customer.customer.custom_current_belt_rank }}</p>
+                    {% if customer.custom_current_belt_rank %}
+                        <p class="text-gray-600">Belt Rank: {{ customer.custom_current_belt_rank }}</p>
                     {% endif %}
                 </div>
                 <div class="text-right">
@@ -24,7 +21,7 @@
         </div>
 
         <!-- Family Group Info -->
-        {% if customer.family_group and customer.family_group.primary_payer != customer.customer.customer_name %}
+        {% if family_group %}
         <div class="bg-blue-50 p-4 rounded-lg mb-6">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
@@ -35,7 +32,7 @@
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-blue-800">Family Account</h3>
                     <p class="mt-1 text-sm text-blue-600">
-                        Viewing invoices for family account (Primary: {{ customer.family_group.primary_payer }})
+                        Family Group: {{ family_group.name }}
                     </p>
                 </div>
             </div>
@@ -46,9 +43,9 @@
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Outstanding Invoices</h2>
             
-            {% if transactions %}
+            {% if invoices and invoices|length > 0 %}
                 <div class="space-y-4 invoice-list">
-                    {% for tx in transactions %}
+                    {% for tx in invoices %}
                         {% if tx.data.outstanding_amount > 0 %}
                         <div class="invoice-item border rounded-lg p-4 hover:bg-gray-50 transition-colors duration-150">
                             <div class="flex items-center justify-between">
@@ -62,14 +59,23 @@
                                     <label for="invoice-{{ tx.data.name }}" class="flex-grow">
                                         <div class="text-sm font-medium text-gray-900">
                                             Invoice #{{ tx.data.name }}
-                                            {% if tx.data.items %}
+                                            {% if tx.data.items and tx.data.items is sequence %}
                                             <span class="ml-2 text-gray-500">({{ tx.data.items|length }} items)</span>
                                             {% endif %}
                                         </div>
                                         <div class="text-sm text-gray-500 mt-0.5">
                                             Due: {{ tx.data.due_date }}
+                                            {% if tx.data.subscription %}
+                                                <br>
+                                                <span class="text-blue-600">
+                                                    Subscription: {{ tx.data.subscription }}
+                                                    {% if tx.data.from_date and tx.data.to_date %}
+                                                        ({{ tx.data.from_date }} to {{ tx.data.to_date }})
+                                                    {% endif %}
+                                                </span>
+                                            {% endif %}
                                         </div>
-                                        {% if tx.data.items %}
+                                        {% if tx.data.items and tx.data.items is sequence %}
                                         <div class="mt-2 text-sm text-gray-600">
                                             {% for item in tx.data.items %}
                                             <div class="flex justify-between items-center py-1">
@@ -88,6 +94,11 @@
                                     <div class="text-sm text-gray-500">
                                         Outstanding
                                     </div>
+                                    {% if tx.data.grand_total != tx.data.outstanding_amount %}
+                                        <div class="text-xs text-gray-400">
+                                            Total: SRD {{ "%.2f"|format(tx.data.grand_total) }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -131,27 +142,13 @@
                     Proceed to Payment
                 </button>
 
-                <!-- No Invoices Message (Hidden by default) -->
-                <div class="no-invoices-message hidden text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Outstanding Invoices</h3>
-                    <p class="mt-1 text-sm text-gray-500">All invoices have been paid.</p>
-                    <div class="mt-6">
-                        <a href="/api/v1/payment" 
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Return to Scanner
-                        </a>
-                    </div>
-                </div>
             {% else %}
                 <div class="text-center py-12">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <h3 class="mt-2 text-sm font-medium text-gray-900">No Invoices Found</h3>
-                    <p class="mt-1 text-sm text-gray-500">There are no invoices to display at this time.</p>
+                    <p class="mt-1 text-sm text-gray-500">There are no outstanding invoices to display at this time.</p>
                     <div class="mt-6">
                         <a href="/api/v1/payment" 
                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -165,7 +162,7 @@
 </div>
 
 <!-- Hidden Fields -->
-<input type="hidden" id="customerName" value="{{ customer.customer.customer_name }}">
+<input type="hidden" id="customerName" value="{{ customer.customer_name }}">
 <input type="hidden" id="sessionId" value="{{ session_id }}">
 
 <!-- Payment Script -->
