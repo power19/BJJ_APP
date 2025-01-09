@@ -194,8 +194,8 @@ class ERPNextClient:
                         ["enabled", "=", 1]
                     ]),
                     'fields': json.dumps([
-                        "name", 
-                        "full_name", 
+                        "name",  # This is the email/user ID
+                        "full_name",
                         "custom_user_rfid", 
                         "enabled",
                         "user_type",
@@ -211,7 +211,7 @@ class ERPNextClient:
                 
                 if users:
                     user = users[0]
-                    user_name = user.get("name")
+                    user_id = user.get("name")  # This is their email/user ID
                     
                     # Get user document with roles
                     detailed_user_endpoint = f"{self.base_url}/api/method/frappe.client.get"
@@ -219,7 +219,7 @@ class ERPNextClient:
                         detailed_user_endpoint,
                         params={
                             'doctype': 'User',
-                            'name': user_name
+                            'name': user_id
                         }
                     )
                     
@@ -237,6 +237,7 @@ class ERPNextClient:
                             return {
                                 "verified": True,
                                 "name": user.get("full_name"),
+                                "user_id": user_id,  # Return the user ID (email)
                                 "roles": roles
                             }
                         else:
@@ -269,7 +270,7 @@ class ERPNextClient:
         """Get all transactions and details for a customer"""
         try:
             print(f"\nFetching transactions for customer: {payer_name}")
-            
+
             # Get sales invoices using client API method
             api_endpoint = f"{self.base_url}/api/method/frappe.client.get_list"
             params = {
@@ -277,28 +278,35 @@ class ERPNextClient:
                 'fields': '["*"]',
                 'filters': json.dumps({
                     'customer': payer_name,
-                    'docstatus': 1  # Only submitted invoices
+                    'docstatus': 1,  # Only submitted invoices
+                    'outstanding_amount': ['>', 0],  # Filter for invoices with outstanding amount
+                    'status': ['in', ['Unpaid', 'Overdue']]  # Filter for unpaid or overdue status
                 }),
                 'order_by': 'due_date desc'
             }
-            
+
+            print(f"API endpoint: {api_endpoint}")  # Debug logging
+            print(f"Params: {params}")  # Debug logging
+
             response = self.session.get(api_endpoint, params=params)
             print(f"Invoice response status: {response.status_code}")
             print(f"Invoice response: {response.text}")
 
             if response.status_code == 200:
                 data = response.json()
-                print(f"Found {len(data.get('message', []))} transactions")
-                return data
-                
+                invoices = data.get('message', [])  # Extract invoices from response
+                print(f"Found {len(invoices)} invoices")  # Debug logging
+                print(f"Invoice data: {invoices}")  # Debug logging
+                return invoices  # Return only the invoices
+
             print(f"No transactions found, status code: {response.status_code}")
-            return {"message": []}
+            return []  # Return an empty list if no transactions found
 
         except Exception as e:
             print(f"Error in get_customer_transactions: {str(e)}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
-            return {"message": []}
+            return []  # Return an empty list in case of an exception
 
 def get_erp_client():
     return ERPNextClient(

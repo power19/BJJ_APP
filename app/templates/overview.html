@@ -4,23 +4,102 @@
 <div class="container mx-auto px-4 py-8">
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total Outstanding Card -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-semibold text-gray-600">Total Outstanding</h3>
-            <p class="text-3xl font-bold text-blue-600">${{ "%.2f"|format(totals.get('total', 0)) }}</p>
+            <p class="text-3xl font-bold text-blue-600">SRD {{ "%.2f"|format(totals.get('total', 0)) }}</p>
             <p class="text-sm text-gray-500 mt-2">Total unpaid invoices: {{ (invoices.get('overdue', []) + invoices.get('unpaid', [])) | length }}</p>
         </div>
         
+        <!-- Overdue Card -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-semibold text-red-600">Overdue</h3>
-            <p class="text-3xl font-bold text-red-600">${{ "%.2f"|format(totals.get('overdue', 0)) }}</p>
+            <p class="text-3xl font-bold text-red-600">SRD {{ "%.2f"|format(totals.get('overdue', 0)) }}</p>
             <p class="text-sm text-gray-500 mt-2">Overdue invoices: {{ invoices.get('overdue', []) | length }}</p>
         </div>
         
+        <!-- Upcoming Due Card -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-semibold text-yellow-600">Upcoming Due</h3>
-            <p class="text-3xl font-bold text-yellow-600">${{ "%.2f"|format(totals.get('unpaid', 0)) }}</p>
+            <p class="text-3xl font-bold text-yellow-600">SRD {{ "%.2f"|format(totals.get('unpaid', 0)) }}</p>
             <p class="text-sm text-gray-500 mt-2">Upcoming invoices: {{ invoices.get('unpaid', []) | length }}</p>
         </div>
+    </div>
+
+    <!-- Recent Payments -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Recent Payments</h2>
+            <form method="get" class="flex items-center space-x-2">
+                <select name="days" 
+                        class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                        onchange="this.form.submit()">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="14" {% if days == 14 %}selected{% endif %}>Last 14 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                </select>
+            </form>
+        </div>
+        
+        <!-- Recent Payments Table -->
+        {% if recent_payments %}
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for payment in recent_payments %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">{{ payment.date }}</div>
+                                <div class="text-xs text-gray-500">{{ payment.processed_at }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ payment.customer }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                SRD {{ "%.2f"|format(payment.amount) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ payment.reference }}
+                                {% if payment.invoices %}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Invoice(s): {{ payment.invoices|join(", ") }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div class="font-medium">{{ payment.processed_by }}</div>
+                                {% if payment.staff_notes %}
+                                <div class="text-xs text-gray-500">{{ payment.staff_notes }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <a href="/api/v1/payment/history/details/{{ payment.payment_id }}" 
+                                   class="text-blue-600 hover:text-blue-900">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+            <p class="text-gray-500">No payments found in the selected time period</p>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Overdue Invoices -->
@@ -79,7 +158,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                ${{ "%.2f"|format(invoice.outstanding) }}
+                                SRD {{ "%.2f"|format(invoice.outstanding) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex space-x-2">

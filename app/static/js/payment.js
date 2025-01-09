@@ -194,12 +194,22 @@ class PaymentManager {
             }
         }
     }
-
     async handleStaffRfid(event) {
         const rfid = event.target.value;
         try {
+            // Validate invoice selection first
+            if (this.selectedInvoices.size === 0) {
+                throw new Error('Please select at least one invoice to pay');
+            }
+
+            const total = parseFloat(this.elements.totalAmount.textContent);
+            if (isNaN(total) || total <= 0) {
+                throw new Error('Invalid payment amount');
+            }
+
             this.updateAuthStatus('Verifying staff card...', 'verifying');
 
+            // First authorize staff
             const authResponse = await fetch('/api/v1/payment/authorize-staff', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -218,43 +228,49 @@ class PaymentManager {
 
             this.updateAuthStatus('Staff authorized! Processing payment...', 'success');
 
-            const paymentData = {
-                invoices: Array.from(this.selectedInvoices),
-                invoice_amounts: this.invoiceAmounts,
-                total_amount: parseFloat(this.elements.totalAmount.textContent),
-                customer_name: this.elements.customerName.value
-            };
+            // Only proceed with payment if authorization was successful
+            if (authData.authorized) {
+                const paymentData = {
+                    invoices: Array.from(this.selectedInvoices),
+                    invoice_amounts: this.invoiceAmounts,
+                    total_amount: total,
+                    customer_name: this.elements.customerName.value,
+                    staff_rfid: rfid  // Include the authorized staff RFID
+                };
 
-            console.log('Payment request data:', paymentData);
+                console.log('Payment request data:', paymentData);
 
-            const paymentResponse = await fetch('/api/v1/payment/process-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(paymentData)
-            });
+                const paymentResponse = await fetch('/api/v1/payment/process-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(paymentData)
+                });
 
-            const responseData = await paymentResponse.json();
-            console.log('Payment response:', responseData);
+                const responseData = await paymentResponse.json();
+                console.log('Payment response:', responseData);
 
-            if (!paymentResponse.ok) {
-                throw new Error(responseData.detail || 'Payment processing failed');
-            }
-
-            // Hide paid invoices
-            this.selectedInvoices.forEach(invoiceId => {
-                const checkbox = document.querySelector(`[value="${invoiceId}"]`);
-                if (checkbox) {
-                    const invoiceElement = checkbox.closest('.invoice-item');
-                    if (invoiceElement) {
-                        invoiceElement.style.display = 'none';
-                    }
+                if (!paymentResponse.ok) {
+                    throw new Error(responseData.detail || 'Payment processing failed');
                 }
-            });
 
-            this.filterPaidInvoices();
+                // Hide paid invoices
+                this.selectedInvoices.forEach(invoiceId => {
+                    const checkbox = document.querySelector(`[value="${invoiceId}"]`);
+                    if (checkbox) {
+                        const invoiceElement = checkbox.closest('.invoice-item');
+                        if (invoiceElement) {
+                            invoiceElement.style.display = 'none';
+                        }
+                    }
+                });
 
-            // Redirect to success page
-            window.location.href = `/api/v1/payment/success/${responseData.payment_id}`;
+                this.filterPaidInvoices();
+
+                // Redirect to success page
+                window.location.href = `/api/v1/payment/success/${responseData.payment_id}`;
+            } else {
+                throw new Error('Staff authorization not confirmed');
+            }
 
         } catch (error) {
             console.error('Payment Error:', error);
@@ -280,9 +296,38 @@ class PaymentManager {
             this.elements.staffRfidInput.focus();
         }
         
+        if (this.elements.proceedButton) {
+            this.elements.proceedButton.style.display = 'block';
+        }
+        
         setTimeout(() => {
             this.updateAuthStatus('Waiting for staff card...', 'waiting');
         }, 3000);
+    }
+
+    handleProceedClick() {
+        // Check if any invoices are selected
+        if (this.selectedInvoices.size === 0) {
+            alert('Please select at least one invoice to pay');
+            return;
+        }
+
+        // Validate total amount
+        const total = parseFloat(this.elements.totalAmount.textContent);
+        if (isNaN(total) || total <= 0) {
+            alert('Invalid payment amount');
+            return;
+        }
+
+        if (this.elements.authSection) {
+            this.elements.authSection.style.display = 'block';
+        }
+        if (this.elements.staffRfidInput) {
+            this.elements.staffRfidInput.focus();
+        }
+        if (this.elements.proceedButton) {
+            this.elements.proceedButton.style.display = 'none';
+        }
     }
 
     startTimer() {

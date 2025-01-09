@@ -13,71 +13,85 @@ class PaymentService:
         """Get all unpaid invoices for a payer"""
         try:
             print(f"\nGetting invoices for payer: {payer_name}")
-            transactions = self.erp_client.get_customer_transactions(payer_name)
             
-            # Extract transactions from the response
-            invoices = transactions.get("message", [])
-            if not isinstance(invoices, list):
-                print("No valid invoices found")
-                return []
-                
-            print(f"Found {len(invoices)} total invoices in response")
+            # Use the client's API method to get invoices
+            api_endpoint = f"{self.erp_client.base_url}/api/method/frappe.client.get_list"
+            params = {
+                'doctype': 'Sales Invoice',
+                'fields': '["*"]',
+                'filters': json.dumps({
+                    'customer': payer_name,
+                    'docstatus': 1,  # Only submitted invoices
+                    'status': ['in', ['Unpaid', 'Overdue']],  # Get both unpaid and overdue invoices
+                    'outstanding_amount': ['>', 0]  # Only invoices with remaining balance
+                })
+            }
             
-            # Filter for unpaid invoices
-            unpaid_invoices = []
-            for invoice in invoices:
-                if not isinstance(invoice, dict):
-                    continue
+            response = self.erp_client.session.get(api_endpoint, params=params)
+            print(f"Invoice response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                invoices = response.json().get('message', [])
+                print(f"Found {len(invoices)} invoices")
                 
-                try:
-                    outstanding = float(invoice.get("outstanding_amount", 0))
-                    print(f"\nChecking invoice {invoice.get('name')}:")
-                    print(f"Outstanding amount: {outstanding}")
-                    print(f"Status: {invoice.get('status')}")
-                    
-                    # Only include invoices with outstanding amount
-                    if outstanding > 0:
-                        print(f"Found unpaid invoice: {invoice.get('name')} - Amount: {outstanding}")
-                        invoice_data = {
+                formatted_invoices = []
+                for invoice in invoices:
+                    try:
+                        # Initialize the base invoice data
+                        formatted_invoice = {
                             "type": "Sales Invoice",
                             "data": {
                                 "name": invoice.get("name"),
                                 "posting_date": invoice.get("posting_date"),
                                 "due_date": invoice.get("due_date"),
-                                "outstanding_amount": outstanding,
+                                "outstanding_amount": float(invoice.get("outstanding_amount", 0)),
                                 "grand_total": float(invoice.get("grand_total", 0)),
                                 "status": invoice.get("status", "Unknown"),
                                 "customer_name": invoice.get("customer_name"),
-                                "subscription": invoice.get("subscription"),
-                                "from_date": invoice.get("from_date"),
-                                "to_date": invoice.get("to_date"),
-                                "items": []
+                                "subscription": None,
+                                "from_date": None,
+                                "to_date": None,
+                                "items": []  # Initialize empty items list
                             }
                         }
+
+                        # Get detailed invoice information
+                        detail_response = self.erp_client.session.get(
+                            f"{self.erp_client.base_url}/api/resource/Sales Invoice/{invoice.get('name')}"
+                        )
                         
-                        # Add subscription item
-                        item_description = "Monthly Subscription"
-                        if invoice.get('subscription'):
-                            item_description += f" - {invoice.get('subscription')}"
-                        if invoice.get('from_date') and invoice.get('to_date'):
-                            item_description += f"\n({invoice.get('from_date')} to {invoice.get('to_date')})"
+                        if detail_response.status_code == 200:
+                            invoice_detail = detail_response.json().get('data', {})
                             
-                        invoice_data["data"]["items"].append({
-                            "description": item_description,
-                            "amount": float(invoice.get("grand_total", 0))
-                        })
+                            # Update with subscription details if available
+                            formatted_invoice["data"]["subscription"] = invoice_detail.get("subscription")
+                            formatted_invoice["data"]["from_date"] = invoice_detail.get("from_date")
+                            formatted_invoice["data"]["to_date"] = invoice_detail.get("to_date")
+                            
+                            # Create item description
+                            item_description = "Monthly Subscription"
+                            if invoice_detail.get('subscription'):
+                                item_description += f" - {invoice_detail.get('subscription')}"
+                            if invoice_detail.get('from_date') and invoice_detail.get('to_date'):
+                                item_description += f"\n({invoice_detail.get('from_date')} to {invoice_detail.get('to_date')})"
+                            
+                            # Add item to items list
+                            formatted_invoice["data"]["items"].append({
+                                "description": item_description,
+                                "amount": float(invoice_detail.get("grand_total", 0))
+                            })
                         
-                        unpaid_invoices.append(invoice_data)
+                        formatted_invoices.append(formatted_invoice)
+                        print(f"Processed invoice {formatted_invoice['data']['name']}")
                         
-                except (ValueError, TypeError) as e:
-                    print(f"Error processing invoice {invoice.get('name')}: {str(e)}")
-                    continue
-                    
-            print(f"\nFound {len(unpaid_invoices)} unpaid invoices after filtering")
-            for inv in unpaid_invoices:
-                print(f"- Invoice {inv['data']['name']}: SRD {inv['data']['outstanding_amount']}")
+                    except Exception as e:
+                        print(f"Error processing invoice {invoice.get('name')}: {str(e)}")
+                        continue
                 
-            return unpaid_invoices
+                return formatted_invoices
+                
+            print(f"No invoices found or error in response: {response.text}")
+            return []
             
         except Exception as e:
             print(f"Error getting payer invoices: {str(e)}")
@@ -170,10 +184,23 @@ class PaymentService:
         """Process payment for selected invoices"""
         try:
             print(f"\nProcessing payment request: {payment_request}")
+
+            # First verify staff authorization
+            if not hasattr(payment_request, 'staff_rfid'):
+                raise ValueError("Staff authorization required")
+
+            staff_result = self.erp_client.verify_staff_rfid(payment_request.staff_rfid)
+            if not staff_result.get("verified"):
+                raise ValueError(staff_result.get("error", "Staff authorization failed"))
+
+            # Get staff email (user ID) instead of display name
+            staff_user_id = staff_result.get("user_id")  # This should be their email/user ID
+            staff_name = staff_result.get("name")  # This is their display name
+            auth_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
             # Validate total amount matches sum of invoice amounts
             total_calculated = sum(float(amount) for amount in payment_request.invoice_amounts.values())
-            if abs(total_calculated - payment_request.total_amount) > 0.01:  # Allow for small float rounding differences
+            if abs(total_calculated - payment_request.total_amount) > 0.01:
                 raise ValueError(f"Total amount mismatch: {total_calculated} != {payment_request.total_amount}")
 
             # Create payment entry
@@ -200,24 +227,35 @@ class PaymentService:
                 "target_exchange_rate": 1,
                 "base_received_amount": payment_request.total_amount,
                 "reference_no": f"PMT-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}",
-                "reference_date": datetime.now().strftime('%Y-%m-%d')
-            }
+                "reference_date": datetime.now().strftime('%Y-%m-%d'),
+                # Set the custom fields for staff authorization
+                "authorized_by_staff": staff_user_id,  # This should be the email/user ID
+                "authorization_time": auth_time,
+                "staff_notes": f"Payment processed by {staff_name}",
+                                
+                # Set the ownership fields
+                "owner": staff_user_id,
+                "modified_by": staff_user_id,
+                # Add to remarks for visibility
+                "remarks": (
+                    f"Payment processed by {staff_name} on {auth_time}\n"
+                    f"Amount SRD {payment_request.total_amount} received from {payment_request.customer_name}"
+                )
+                }
 
             # Add references to invoices
-            references = []
-            for invoice_id in payment_request.invoices:
-                amount = payment_request.invoice_amounts[invoice_id]
-                if amount > 0:
-                    references.append({
-                        "reference_doctype": "Sales Invoice",
-                        "reference_name": invoice_id,
-                        "allocated_amount": amount
-                    })
-                    
-            if not references:
-                raise ValueError("No valid invoice references found")
-                
-            payment_data["references"] = references
+            # Update references if needed
+            if payment_request.invoices:
+                references = []
+                for invoice_id in payment_request.invoices:
+                    amount = payment_request.invoice_amounts[invoice_id]
+                    if amount > 0:
+                        references.append({
+                            "reference_doctype": "Sales Invoice",
+                            "reference_name": invoice_id,
+                            "allocated_amount": amount
+                        })
+                payment_data["references"] = references
             
             print(f"Creating payment entry: {json.dumps(payment_data, indent=2)}")
 
@@ -239,14 +277,34 @@ class PaymentService:
             
             print(f"Created payment entry: {payment_name}")
 
+            # Get the full document before submitting
+            doc_response = self.erp_client.session.get(
+                f"{self.erp_client.base_url}/api/resource/Payment Entry/{payment_name}"
+            )
+            
+            if doc_response.status_code != 200:
+                raise ValueError("Failed to get payment document")
+                
+            doc_data = doc_response.json().get("data", {})
+
             # Submit the payment
             submit_response = self.erp_client.session.post(
                 f"{self.erp_client.base_url}/api/method/frappe.client.submit",
-                json={"doc": payment_entry.get("message")}
+                json={"doc": doc_data}
             )
 
             if submit_response.status_code not in (200, 201):
                 print(f"Error submitting payment: {submit_response.text}")
+                
+                # Try to clean up the draft payment
+                try:
+                    cancel_response = self.erp_client.session.delete(
+                        f"{self.erp_client.base_url}/api/resource/Payment Entry/{payment_name}"
+                    )
+                    print(f"Cancelled draft payment: {cancel_response.status_code}")
+                except Exception as e:
+                    print(f"Failed to cancel draft payment: {str(e)}")
+                    
                 raise Exception(f"Failed to submit payment: {submit_response.text}")
 
             print(f"Successfully submitted payment: {payment_name}")

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import json
 import uuid
-from ..services.payment_service import PaymentService  # Add this import
+from ..services.payment_service import PaymentService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -20,13 +20,11 @@ class PaymentRequest(BaseModel):
     invoice_amounts: Dict[str, float]
     total_amount: float
     customer_name: str
+    staff_rfid: str  # Required for staff authorization
 
 class StaffAuthRequest(BaseModel):
     staff_rfid: str
-    invoices: List[str]
-
-# Session storage
-active_sessions: Dict[str, dict] = {}
+    staff_name: Optional[str] = None
 
 @router.get("/")
 async def payment_home(request: Request):
@@ -97,10 +95,10 @@ async def process_payment(request: Request, session_id: str, erp_client: ERPNext
         template_data = {
             "request": request,
             "customer": session.get('payer', {}),
-            "invoices": invoices,
+            "invoices": session.get('invoices', []),
             "family_group": session.get('family_group'),
             "session_id": session_id,
-            "customer_type": customer_type
+            "customer_type": session.get('customer_type', 'individual')
         }
 
         print(f"Rendering template with data: {template_data}")
@@ -122,10 +120,7 @@ async def process_payment(request: Request, session_id: str, erp_client: ERPNext
         )
 
 @router.post("/authorize-staff")
-async def authorize_staff(
-    auth_request: StaffAuthRequest, 
-    erp_client: ERPNextClient = Depends(get_erp_client)
-):
+async def authorize_staff(auth_request: StaffAuthRequest, erp_client: ERPNextClient = Depends(get_erp_client)):
     try:
         print(f"Authorizing staff with RFID: {auth_request.staff_rfid}")
         
@@ -141,10 +136,12 @@ async def authorize_staff(
                 detail=staff_result.get("error", "Staff not authorized")
             )
 
+        # Store the authorized staff info in the session
         return {
             "status": "success", 
             "authorized": True,
             "staff_name": staff_result.get("name"),
+            "staff_rfid": auth_request.staff_rfid,  # Include RFID in response
             "roles": staff_result.get("roles", [])
         }
 
@@ -162,10 +159,22 @@ async def process_payment_submission(
     erp_client: ERPNextClient = Depends(get_erp_client)
 ):
     try:
+        print(f"\nProcessing payment request: {payment_request}")
+        
+        # Verify staff authorization first
+        staff_auth = erp_client.verify_staff_rfid(payment_request.staff_rfid)
+        if not staff_auth.get("verified"):
+            raise HTTPException(
+                status_code=401,
+                detail="Staff authorization required before processing payment"
+            )
+            
         payment_service = PaymentService(erp_client)
-        # Process payment using the service
-        return await payment_service.process_payment(payment_request)
+        result = await payment_service.process_payment(payment_request)
+        return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Payment processing error: {str(e)}")
         import traceback
@@ -212,11 +221,95 @@ async def payment_success(
                 "amount": payment_data.get("paid_amount"),
                 "currency": payment_data.get("paid_from_account_currency"),
                 "customer": payment_data.get("party_name"),
-                "date": payment_data.get("posting_date")
+                "date": payment_data.get("posting_date"),
+                "authorized_by": payment_data.get("authorized_by_staff"),
+                "authorization_time": payment_data.get("authorization_time"),
+                "staff_notes": payment_data.get("staff_notes")
             }
         )
     except Exception as e:
         print(f"Error displaying success page: {str(e)}")
+        return templates.TemplateResponse(
+            "payment/error.html",
+            {
+                "request": request,
+                "error": "Failed to load payment details"
+            }
+        )
+    
+# app/routes/payment.py
+
+@router.get("/history/details/{payment_id}")
+async def payment_details(
+    request: Request,
+    payment_id: str,
+    erp_client: ERPNextClient = Depends(get_erp_client)
+):
+    """View detailed payment information"""
+    try:
+        # Get payment details
+        response = erp_client.session.get(
+            f"{erp_client.base_url}/api/resource/Payment Entry/{payment_id}"
+        )
+        
+        if response.status_code != 200:
+            print(f"Error getting payment: {response.text}")
+            return templates.TemplateResponse(
+                "payment/error.html",
+                {
+                    "request": request,
+                    "error": "Payment not found"
+                }
+            )
+            
+        payment_data = response.json().get("data", {})
+        
+        # Get staff details
+        staff_name = payment_data.get("authorized_by_staff")
+        if not staff_name:
+            staff_user = payment_data.get("owner")
+            if staff_user:
+                user_response = erp_client.session.get(
+                    f"{erp_client.base_url}/api/resource/User/{staff_user}"
+                )
+                if user_response.status_code == 200:
+                    user_data = user_response.json().get("data", {})
+                    staff_name = user_data.get("full_name")
+        
+        # Get invoice details
+        invoice_details = []
+        for ref in payment_data.get("references", []):
+            if ref.get("reference_doctype") == "Sales Invoice":
+                invoice_id = ref.get("reference_name")
+                invoice_response = erp_client.session.get(
+                    f"{erp_client.base_url}/api/resource/Sales Invoice/{invoice_id}"
+                )
+                if invoice_response.status_code == 200:
+                    invoice_data = invoice_response.json().get("data", {})
+                    invoice_details.append({
+                        "invoice_id": invoice_id,
+                        "amount": ref.get("allocated_amount"),
+                        "invoice_date": invoice_data.get("posting_date"),
+                        "due_date": invoice_data.get("due_date"),
+                        "items": invoice_data.get("items", [])
+                    })
+        
+        return templates.TemplateResponse(
+            "payment/details.html",
+            {
+                "request": request,
+                "payment": payment_data,
+                "staff_name": staff_name,
+                "invoice_details": invoice_details,
+                "auth_time": payment_data.get("authorization_time"),
+                "staff_notes": payment_data.get("staff_notes")
+            }
+        )
+
+    except Exception as e:
+        print(f"Error displaying payment details: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return templates.TemplateResponse(
             "payment/error.html",
             {

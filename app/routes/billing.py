@@ -306,3 +306,97 @@ async def test_api_methods(
                 
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/debug/payment/{payment_id}")
+async def debug_payment(
+    payment_id: str,
+    erp_client: ERPNextClient = Depends(get_erp_client)
+):
+    """Debug endpoint to check raw payment entry data"""
+    try:
+        # First get the basic payment entry
+        response = erp_client.session.get(
+            f"{erp_client.base_url}/api/resource/Payment Entry/{payment_id}"
+        )
+        
+        if response.status_code != 200:
+            return {"error": "Failed to fetch payment entry"}
+
+        payment_data = response.json()
+        
+        # Get doctype metadata to see available fields
+        meta_response = erp_client.session.get(
+            f"{erp_client.base_url}/api/method/frappe.desk.form.meta.get_meta",
+            params={"doctype": "Payment Entry"}
+        )
+        
+        # Get any custom fields
+        custom_fields_response = erp_client.session.get(
+            f"{erp_client.base_url}/api/resource/Custom Field",
+            params={
+                'filters': json.dumps([["dt", "=", "Payment Entry"]]),
+                'fields': '["*"]'
+            }
+        )
+        
+        # Get document's version history
+        version_response = erp_client.session.get(
+            f"{erp_client.base_url}/api/method/frappe.core.page.version.version.get_version_timeline",
+            params={
+                "docname": payment_id,
+                "doctype": "Payment Entry"
+            }
+        )
+
+        return {
+            "payment_entry": payment_data,
+            "metadata": meta_response.json() if meta_response.status_code == 200 else None,
+            "custom_fields": custom_fields_response.json() if custom_fields_response.status_code == 200 else None,
+            "versions": version_response.json() if version_response.status_code == 200 else None
+        }
+        
+    except Exception as e:
+        print(f"Error in debug payment: {str(e)}")
+        return {"error": str(e)}
+
+@router.get("/debug/user/{user_id}")
+async def debug_user(
+    user_id: str,
+    erp_client: ERPNextClient = Depends(get_erp_client)
+):
+    """Debug endpoint to check user data"""
+    try:
+        # Get user document
+        response = erp_client.session.get(
+            f"{erp_client.base_url}/api/resource/User/{user_id}"
+        )
+        
+        if response.status_code != 200:
+            return {"error": "Failed to fetch user"}
+
+        user_data = response.json()
+        
+        # Get user's roles
+        roles_response = erp_client.session.get(
+            f"{erp_client.base_url}/api/resource/Has Role",
+            params={
+                'filters': json.dumps([["parent", "=", user_id]]),
+                'fields': '["*"]'
+            }
+        )
+        
+        # Get user's login history
+        login_response = erp_client.session.get(
+            f"{erp_client.base_url}/api/method/frappe.core.doctype.user.user.get_user_info",
+            params={"user": user_id}
+        )
+
+        return {
+            "user": user_data,
+            "roles": roles_response.json() if roles_response.status_code == 200 else None,
+            "login_info": login_response.json() if login_response.status_code == 200 else None
+        }
+        
+    except Exception as e:
+        print(f"Error in debug user: {str(e)}")
+        return {"error": str(e)}
