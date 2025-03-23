@@ -193,6 +193,11 @@ class PaymentService:
             if not staff_result.get("verified"):
                 raise ValueError(staff_result.get("error", "Staff authorization failed"))
 
+            # Check if staff is treasurer/head coach
+            staff_roles = staff_result.get("roles", [])
+            staff_is_treasurer = any(role in ["Treasurer", "Head Coach", "Accounts User", "System Manager", "Administrator"] 
+                                    for role in staff_roles)
+
             # Get staff email (user ID) instead of display name
             staff_user_id = staff_result.get("user_id")  # This should be their email/user ID
             staff_name = staff_result.get("name")  # This is their display name
@@ -232,7 +237,9 @@ class PaymentService:
                 "authorized_by_staff": staff_user_id,  # This should be the email/user ID
                 "authorization_time": auth_time,
                 "staff_notes": f"Payment processed by {staff_name}",
-                                
+                "custom_handover_status": "transferred" if staff_is_treasurer else "pending",
+                "custom_received_by_role": "Treasurer" if staff_is_treasurer else "Coach",
+                               
                 # Set the ownership fields
                 "owner": staff_user_id,
                 "modified_by": staff_user_id,

@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment
+from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover
 
 app = FastAPI(title="Invictus BJJ")
 
@@ -25,7 +25,7 @@ app.include_router(main.router, prefix="/api/v1/main", tags=["main"])
 app.include_router(payment.router, prefix="/api/v1/payment", tags=["payment"])
 app.include_router(overview.router)  # No prefix for overview since it's a main page
 app.include_router(enrollment.router, prefix="/api/v1/enrollment", tags=["enrollment"])  # Add enrollment router
-
+app.include_router(handover.router, prefix="/api/v1/payment/handover", tags=["handover"])
 # Root route using the templates
 @app.get("/")
 async def root(request: Request):

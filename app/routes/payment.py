@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 import json
 import uuid
 from ..services.payment_service import PaymentService
+from ..services.handover_service import HandoverService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -238,6 +239,40 @@ async def payment_success(
         )
     
 # app/routes/payment.py
+@router.get("/history")
+async def payment_history(
+    request: Request,
+    days: int = 30,
+    erp_client: ERPNextClient = Depends(get_erp_client)
+):
+    """View payment history with handover status"""
+    try:
+        # Use the handover service to get comprehensive payment history
+        from ..services.handover_service import HandoverService
+        handover_service = HandoverService(erp_client)
+        payment_history = await handover_service.get_payment_history(days)
+        
+        # Calculate date ranges for the view
+        from datetime import datetime, timedelta
+        start_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        return templates.TemplateResponse(
+            "payment/history.html",
+            {
+                "request": request,
+                "payments": payment_history,
+                "days": days,
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+    except Exception as e:
+        print(f"Error in payment history: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/history/details/{payment_id}")
 async def payment_details(

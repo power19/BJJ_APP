@@ -1,4 +1,3 @@
-<!-- app/templates/payment/history.html -->
 {% extends "base.html" %}
 
 {% block title %}Payment History{% endblock %}
@@ -7,11 +6,23 @@
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-900">Payment History</h1>
-            <p class="mt-1 text-sm text-gray-600">
-                Showing payments from {{ start_date }} to {{ end_date }}
-            </p>
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Payment History</h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Showing payments from {{ start_date }} to {{ end_date }}
+                </p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/api/v1/payment/handover/dashboard" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Handover Dashboard
+                </a>
+                <a href="/api/v1/payment" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    New Payment
+                </a>
+            </div>
         </div>
 
         <!-- Filter Section -->
@@ -23,6 +34,7 @@
                         <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
                         <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
                         <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                        <option value="180" {% if days == 180 %}selected{% endif %}>Last 6 months</option>
                     </select>
                 </div>
                 <button type="submit" class="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -46,10 +58,10 @@
                             Amount
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Reference
+                            Received By
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Processed By
+                            Handover Status
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
@@ -60,29 +72,53 @@
                     {% for payment in payments %}
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ payment.posting_date }}
+                            {{ payment.date }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ payment.party }}</div>
-                            {% if payment.references %}
+                            <div class="text-sm font-medium text-gray-900">{{ payment.customer_name }}</div>
+                            {% if payment.invoices %}
                             <div class="text-sm text-gray-500">
-                                {{ payment.references|length }} invoice(s)
+                                {{ payment.invoices|length }} invoice(s)
                             </div>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">SRD {{ "%.2f"|format(payment.paid_amount) }}</div>
+                            <div class="text-sm text-gray-900">SRD {{ "%.2f"|format(payment.amount) }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ payment.reference_no }}</div>
+                            <div class="text-sm text-gray-900">{{ payment.received_by }}</div>
+                            <div class="text-sm text-gray-500">{{ payment.received_at|replace("T", " ")|truncate(16, true, "") }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ payment.staff_name or payment.modified_by }}</div>
-                            <div class="text-sm text-gray-500">{{ payment.modified }}</div>
+                            {% if payment.status == 'transferred' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Transferred
+                                </span>
+                                <div class="text-xs text-gray-500 mt-1">To: {{ payment.transferred_to }}</div>
+                                {% if payment.transferred_at %}
+                                    <div class="text-xs text-gray-500">{{ payment.transferred_at|replace("T", " ")|truncate(16, true, "") }}</div>
+                                {% endif %}
+                            {% elif payment.status == 'pending' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Pending
+                                </span>
+                                {% if payment.received_by_role == "Coach" %}
+                                <div class="text-xs text-gray-500 mt-1">Awaiting treasurer handover</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    Completed
+                                </span>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <a href="/api/v1/payment/history/details/{{ payment.name }}" 
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="/api/v1/payment/history/details/{{ payment.payment_id }}" 
                                class="text-blue-600 hover:text-blue-900">View Details</a>
+                            
+                            {% if payment.status == 'pending' and payment.received_by_role == "Coach" %}
+                            <a href="/api/v1/payment/handover/process/{{ payment.payment_id }}" 
+                               class="ml-3 text-green-600 hover:text-green-900">Process Transfer</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Handover Confirmation{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Payment Handover Confirmation</h1>
+            <p class="mt-1 text-sm text-gray-600">
+                Reference: {{ payment.reference_no }}
+            </p>
+        </div>
+
+        <!-- Payment Information -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Payment Information
+                </h3>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Customer</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ payment.party_name }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Amount</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            SRD {{ "%.2f"|format(payment.paid_amount) }}
+                        </dd>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ payment.posting_date }}</dd>
+                    </div>
+                    <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Received By</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            {{ staff_name }}<br>
+                            <span class="text-gray-500">{{ payment.authorization_time or payment.creation }}</span>
+                        </dd>
+                    </div>
+                    {% if payment.remarks %}
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Remarks</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 whitespace-pre-line">{{ payment.remarks }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Invoices -->
+        {% if invoice_details %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Referenced Invoices
+                </h3>
+            </div>
+            <div class="border-t border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Invoice #
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Due Date
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Amount
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for invoice in invoice_details %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ invoice.invoice_id }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ invoice.invoice_date }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ invoice.due_date }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                SRD {{ "%.2f"|format(invoice.amount) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Treasurer Confirmation Form -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Treasurer Confirmation
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Please scan your RFID card to confirm payment receipt
+                </p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
+                <div class="text-center mb-6">
+                    <p class="text-gray-600">By confirming receipt, you acknowledge that you've received the full payment amount.</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="treasurerRfid" class="sr-only">Treasurer RFID</label>
+                    <input type="password"
+                           id="treasurerRfid"
+                           class="block w-full shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm border-gray-300 rounded-md"
+                           placeholder="Scan your RFID card"
+                           autocomplete="off">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Notes (optional)</label>
+                    <textarea id="notes"
+                              rows="3"
+                              class="block w-full shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm border-gray-300 rounded-md"
+                              placeholder="Add any notes about this handover"></textarea>
+                </div>
+                
+                <div id="scanStatus" class="text-center text-sm text-gray-500 mb-4">
+                    Waiting for treasurer RFID...
+                </div>
+                
+                <div id="actionButtons" class="flex justify-end space-x-3">
+                    <a href="/api/v1/payment/handover/dashboard"
+                       class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment ID hidden input -->
+<input type="hidden" id="paymentId" value="{{ payment_id }}">
+
+<!-- JavaScript for RFID handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rfidInput = document.getElementById('treasurerRfid');
+    const notesField = document.getElementById('notes');
+    const scanStatus = document.getElementById('scanStatus');
+    const paymentId = document.getElementById('paymentId').value;
+    
+    // Focus on RFID input when page loads
+    if (rfidInput) {
+        rfidInput.focus();
+        
+        // Handle RFID input
+        rfidInput.addEventListener('input', async function() {
+            const rfid = this.value;
+            if (rfid.length >= 8) {
+                scanStatus.textContent = 'Processing confirmation...';
+                
+                try {
+                    const response = await fetch('/api/v1/payment/handover/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rfid: rfid,
+                            payment_id: paymentId,
+                            notes: notesField.value
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        scanStatus.textContent = 'Confirmation successful! Redirecting...';
+                        scanStatus.classList.add('text-green-600', 'font-semibold');
+                        
+                        // Redirect to success page
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url || '/api/v1/payment/handover/dashboard';
+                        }, 1500);
+                    } else {
+                        scanStatus.textContent = data.detail || 'Error processing confirmation';
+                        scanStatus.classList.add('text-red-600', 'font-semibold');
+                        rfidInput.value = '';
+                        setTimeout(() => {
+                            scanStatus.textContent = 'Waiting for treasurer RFID...';
+                            scanStatus.classList.remove('text-red-600', 'font-semibold');
+                        }, 3000);
+                    }
+                } catch (error) {
+                    scanStatus.textContent = 'Error processing confirmation';
+                    scanStatus.classList.add('text-red-600', 'font-semibold');
+                    rfidInput.value = '';
+                    setTimeout(() => {
+                        scanStatus.textContent = 'Waiting for treasurer RFID...';
+                        scanStatus.classList.remove('text-red-600', 'font-semibold');
+                    }, 3000);
+                }
+            }
+        });
+        
+        // Keep focus on RFID input when clicking anywhere on the page
+        document.addEventListener('click', function() {
+            rfidInput.focus();
+        });
+    }
+});
+</script>
+{% endblock %}
