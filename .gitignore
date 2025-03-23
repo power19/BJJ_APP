@@ -1,14 +1,22 @@
-# Create a .gitignore file
-# In C:\Users\Power\BJJ_APP\.gitignore
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
+env/
 .env
 .venv/
-env/
 venv/
 ENV/
+
+# IDE files
 .idea/
 .vscode/
 *.swp
+
+# Logs
+*.log
+
+# Docker
+.dockerignore
