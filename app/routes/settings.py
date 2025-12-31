@@ -10,6 +10,7 @@ import os
 import requests
 
 from ..utils.config import get_config
+from ..utils.erpnext_init import get_initializer
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -294,3 +295,89 @@ async def backup_erpnext_status():
             counts[doctype] = -1
 
     return JSONResponse({"success": True, "counts": counts})
+
+
+# =====================
+# ERPNext Initialization
+# =====================
+
+@router.get("/init/status")
+async def initialization_status():
+    """Get the initialization status of all required doctypes."""
+    initializer = get_initializer()
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    try:
+        status = initializer.get_initialization_status()
+        is_complete = all(status.values())
+
+        return JSONResponse({
+            "success": True,
+            "is_complete": is_complete,
+            "doctypes": status
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@router.post("/init/run")
+async def run_initialization():
+    """Run the initialization process to create all required doctypes."""
+    initializer = get_initializer()
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    try:
+        # Create doctypes
+        results = initializer.initialize_all()
+
+        # Check if all were successful
+        all_success = all(success for success, _ in results.values())
+
+        # Format results for response
+        formatted_results = {
+            name: {"success": success, "message": message}
+            for name, (success, message) in results.items()
+        }
+
+        return JSONResponse({
+            "success": all_success,
+            "message": "Initialization complete" if all_success else "Some doctypes failed to create",
+            "results": formatted_results
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@router.post("/init/create-defaults")
+async def create_default_data():
+    """Create default membership types and class types."""
+    initializer = get_initializer()
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    try:
+        results = initializer.create_default_data()
+
+        # Format results
+        formatted_results = {
+            name: {"success": success, "message": message}
+            for name, (success, message) in results.items()
+        }
+
+        all_success = all(success for success, _ in results.values())
+
+        return JSONResponse({
+            "success": all_success,
+            "message": "Default data created" if all_success else "Some items failed",
+            "results": formatted_results
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})

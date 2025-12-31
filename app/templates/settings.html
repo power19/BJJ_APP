@@ -146,6 +146,39 @@
             <p class="hint" style="margin-top: 0.75rem;">Includes: Customers, Members, Invoices, Payments, Memberships</p>
         </div>
     </section>
+
+    <!-- ERPNext Initialization -->
+    <section class="settings-section">
+        <div class="section-header">
+            <h2>Database Setup</h2>
+            <p class="section-desc">Initialize required ERPNext doctypes for gym management</p>
+        </div>
+
+        <div class="card">
+            <div class="init-status" id="initStatus">
+                <div class="backup-loading">
+                    <div class="spinner-small"></div>
+                    <span>Checking database status...</span>
+                </div>
+            </div>
+
+            <div class="init-actions" id="initActions" style="display: none;">
+                <button type="button" class="btn btn-primary btn-block" id="runInitBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 6.75a5.25 5.25 0 016.775-5.025.75.75 0 01.313 1.248l-3.32 3.319c.063.475.276.934.641 1.299.365.365.824.578 1.3.64l3.318-3.319a.75.75 0 011.248.313 5.25 5.25 0 01-5.472 6.756c-1.018-.086-1.87.1-2.309.634L7.344 21.3A3.298 3.298 0 112.7 16.657l8.684-7.151c.533-.44.72-1.291.634-2.309A5.342 5.342 0 0112 6.75zM4.117 19.125a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75h-.008a.75.75 0 01-.75-.75v-.008z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="initBtnText">Initialize Database</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-block" id="createDefaultsBtn" style="margin-top: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="defaultsBtnText">Create Default Data</span>
+                </button>
+            </div>
+            <p class="hint" style="margin-top: 0.75rem;">Creates: Membership Types, Gym Members, Attendance, Classes, etc.</p>
+        </div>
+    </section>
     {% endif %}
 
     <!-- App Info -->
@@ -510,6 +543,88 @@
     .backup-stat-value.unavailable {
         color: #64748b;
     }
+
+    /* Initialization Status */
+    .init-status {
+        margin-bottom: 1rem;
+    }
+
+    .init-complete {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 10px;
+        color: #34d399;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .init-complete svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .init-pending {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: rgba(251, 191, 36, 0.15);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 10px;
+        color: #fbbf24;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .init-pending svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .doctype-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .doctype-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: rgba(15, 23, 42, 0.4);
+        border-radius: 8px;
+        font-size: 0.8125rem;
+    }
+
+    .doctype-name {
+        color: #e2e8f0;
+    }
+
+    .doctype-status {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .doctype-status svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .doctype-status.exists {
+        color: #34d399;
+    }
+
+    .doctype-status.missing {
+        color: #f87171;
+    }
 </style>
 {% endblock %}
 
@@ -672,6 +787,146 @@
             downloadErpBtn.disabled = false;
             downloadBtnText.textContent = 'Download ERPNext Backup';
         });
+    }
+
+    // Database Initialization
+    const initStatus = document.getElementById('initStatus');
+    const initActions = document.getElementById('initActions');
+    const runInitBtn = document.getElementById('runInitBtn');
+    const createDefaultsBtn = document.getElementById('createDefaultsBtn');
+    const initBtnText = document.getElementById('initBtnText');
+    const defaultsBtnText = document.getElementById('defaultsBtnText');
+
+    if (initStatus) {
+        // Load initialization status
+        async function loadInitStatus() {
+            try {
+                const response = await fetch('/settings/init/status');
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.is_complete) {
+                        initStatus.innerHTML = `
+                            <div class="init-complete">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                                </svg>
+                                <span>All doctypes initialized</span>
+                            </div>
+                        `;
+                        // Show only the create defaults button
+                        initActions.style.display = 'block';
+                        runInitBtn.style.display = 'none';
+                    } else {
+                        // Show doctype status list
+                        let html = `
+                            <div class="init-pending">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Some doctypes need initialization</span>
+                            </div>
+                            <div class="doctype-list">
+                        `;
+
+                        for (const [doctype, exists] of Object.entries(result.doctypes)) {
+                            const statusClass = exists ? 'exists' : 'missing';
+                            const statusIcon = exists
+                                ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>'
+                                : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" /></svg>';
+                            const statusText = exists ? 'Ready' : 'Missing';
+
+                            html += `
+                                <div class="doctype-item">
+                                    <span class="doctype-name">${doctype}</span>
+                                    <span class="doctype-status ${statusClass}">${statusIcon} ${statusText}</span>
+                                </div>
+                            `;
+                        }
+
+                        html += '</div>';
+                        initStatus.innerHTML = html;
+                        initActions.style.display = 'block';
+                        runInitBtn.style.display = 'flex';
+                    }
+                } else {
+                    initStatus.innerHTML = '<p class="hint">Could not check initialization status</p>';
+                }
+            } catch (error) {
+                initStatus.innerHTML = '<p class="hint">Could not check initialization status</p>';
+            }
+        }
+
+        loadInitStatus();
+
+        // Run initialization
+        if (runInitBtn) {
+            runInitBtn.addEventListener('click', async () => {
+                runInitBtn.disabled = true;
+                initBtnText.textContent = 'Initializing...';
+
+                try {
+                    const response = await fetch('/settings/init/run', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast('success', 'Database initialized successfully');
+                        setTimeout(() => loadInitStatus(), 500);
+                    } else {
+                        // Show partial results
+                        let errorMsg = result.message || 'Initialization failed';
+                        if (result.results) {
+                            const failed = Object.entries(result.results)
+                                .filter(([_, r]) => !r.success)
+                                .map(([name, _]) => name);
+                            if (failed.length > 0) {
+                                errorMsg += ': ' + failed.join(', ');
+                            }
+                        }
+                        showToast('error', errorMsg);
+                        loadInitStatus();
+                    }
+                } catch (error) {
+                    showToast('error', 'Initialization failed');
+                }
+
+                runInitBtn.disabled = false;
+                initBtnText.textContent = 'Initialize Database';
+            });
+        }
+
+        // Create default data
+        if (createDefaultsBtn) {
+            createDefaultsBtn.addEventListener('click', async () => {
+                createDefaultsBtn.disabled = true;
+                defaultsBtnText.textContent = 'Creating...';
+
+                try {
+                    const response = await fetch('/settings/init/create-defaults', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast('success', 'Default data created successfully');
+                    } else {
+                        let errorMsg = result.message || 'Failed to create default data';
+                        if (result.results) {
+                            const failed = Object.entries(result.results)
+                                .filter(([_, r]) => !r.success)
+                                .map(([name, r]) => `${name}: ${r.message}`);
+                            if (failed.length > 0) {
+                                console.log('Failed items:', failed);
+                            }
+                        }
+                        showToast('error', errorMsg);
+                    }
+                } catch (error) {
+                    showToast('error', 'Failed to create default data');
+                }
+
+                createDefaultsBtn.disabled = false;
+                defaultsBtnText.textContent = 'Create Default Data';
+            });
+        }
     }
 </script>
 {% endblock %}
