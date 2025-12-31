@@ -2,7 +2,11 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover
+from fastapi.responses import RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup
+from app.utils.config import get_config
 
 app = FastAPI(title="Invictus BJJ")
 
@@ -11,26 +15,51 @@ templates = Jinja2Templates(directory="app/templates")
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+class SetupMiddleware(BaseHTTPMiddleware):
+    """Middleware to redirect to setup page if app is not configured."""
+
+    # Paths that should be accessible without configuration
+    ALLOWED_PATHS = [
+        '/setup',
+        '/static',
+    ]
+
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+
+        # Allow setup and static paths without config check
+        if any(path.startswith(allowed) for allowed in self.ALLOWED_PATHS):
+            return await call_next(request)
+
+        # Check if app is configured
+        config = get_config()
+        if not config.is_configured():
+            return RedirectResponse(url="/setup", status_code=302)
+
+        return await call_next(request)
+
+
+# Add middleware
+app.add_middleware(SetupMiddleware)
+
+# Include setup router first (before other routers)
+app.include_router(setup.router, prefix="/setup", tags=["setup"])
+
+# Include other routers
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
-
-@app.get("/")
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-# Include routers
-app.include_router(customers.router, prefix="/api")  # This means routes will start with /api
+app.include_router(customers.router, prefix="/api")
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
 app.include_router(attendance.router, prefix="/api/v1/attendance", tags=["attendance"])
 app.include_router(main.router, prefix="/api/v1/main", tags=["main"])
 app.include_router(payment.router, prefix="/api/v1/payment", tags=["payment"])
-app.include_router(overview.router)  # No prefix for overview since it's a main page
-app.include_router(enrollment.router, prefix="/api/v1/enrollment", tags=["enrollment"])  # Add enrollment router
+app.include_router(overview.router)
+app.include_router(enrollment.router, prefix="/api/v1/enrollment", tags=["enrollment"])
 app.include_router(handover.router, prefix="/api/v1/payment/handover", tags=["handover"])
-# Root route using the templates
+
+
 @app.get("/")
-async def root(request: Request):
-    # Actually using the templates instance here
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request}
-    )
+async def index(request: Request):
+    """Home page."""
+    return templates.TemplateResponse("index.html", {"request": request})

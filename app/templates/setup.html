@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Invictus BJJ</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+    <!-- Stylesheets -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .setup-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .setup-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 2.5rem;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-section img {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .logo-section p {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #ef4444;
+        }
+
+        .form-input.success {
+            border-color: #10b981;
+        }
+
+        .form-hint {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            display: block;
+        }
+
+        .status-message.testing {
+            background: #dbeafe;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #3b82f6;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .password-toggle:hover {
+            color: #374151;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 0.5rem;
+        }
+
+        .step {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e5e7eb;
+        }
+
+        .step.active {
+            background: #3b82f6;
+        }
+
+        .step.completed {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-card">
+            <div class="logo-section">
+                <img src="/static/images/logo.png" alt="Invictus BJJ" onerror="this.style.display='none'">
+                <h1>Invictus BJJ Setup</h1>
+                <p>Configure your ERPNext connection</p>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step active" id="step1"></div>
+                <div class="step" id="step2"></div>
+                <div class="step" id="step3"></div>
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+
+            <form id="setupForm">
+                <div class="form-group">
+                    <label class="form-label" for="erpnext_url">ERPNext URL</label>
+                    <input
+                        type="url"
+                        id="erpnext_url"
+                        name="erpnext_url"
+                        class="form-input"
+                        placeholder="https://your-instance.erpnext.com"
+                        required
+                        value="{{ config.url if config else '' }}"
+                    >
+                    <p class="form-hint">The full URL of your ERPNext instance</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="erpnext_api_key">API Key</label>
+                    <input
+                        type="text"
+                        id="erpnext_api_key"
+                        name="erpnext_api_key"
+                        class="form-input"
+                        placeholder="Enter your API key"
+                        required
+                        value="{{ config.api_key if config else '' }}"
+                    >
+                    <p class="form-hint">Found in ERPNext under User Settings > API Access</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="erpnext_api_secret">API Secret</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            id="erpnext_api_secret"
+                            name="erpnext_api_secret"
+                            class="form-input"
+                            placeholder="Enter your API secret"
+                            required
+                            value="{{ config.api_secret if config else '' }}"
+                        >
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="form-hint">Your API secret (shown only once when generated)</p>
+                </div>
+
+                <button type="button" class="btn btn-secondary" onclick="testConnection()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+                    </svg>
+                    Test Connection
+                </button>
+
+                <button type="submit" class="btn btn-primary" id="saveBtn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Save Configuration
+                </button>
+            </form>
+        </div>
+
+        <p style="text-align: center; color: rgba(255,255,255,0.6); margin-top: 1.5rem; font-size: 0.875rem;">
+            Need help? Check the <a href="https://docs.erpnext.com/docs/v14/user/manual/en/api" target="_blank" style="color: #60a5fa; text-decoration: underline;">ERPNext API documentation</a>
+        </p>
+    </div>
+
+    <script>
+        let connectionTested = false;
+
+        function togglePassword() {
+            const input = document.getElementById('erpnext_api_secret');
+            const icon = document.getElementById('eyeIcon');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" /><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />';
+            }
+        }
+
+        function showStatus(type, message) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = 'status-message ' + type;
+
+            if (type === 'testing') {
+                statusEl.innerHTML = '<div class="spinner"></div>' + message;
+            } else {
+                statusEl.textContent = message;
+            }
+        }
+
+        function hideStatus() {
+            document.getElementById('statusMessage').className = 'status-message';
+        }
+
+        function updateSteps(step) {
+            document.getElementById('step1').className = step >= 1 ? 'step completed' : 'step';
+            document.getElementById('step2').className = step >= 2 ? 'step completed' : (step === 1 ? 'step active' : 'step');
+            document.getElementById('step3').className = step >= 3 ? 'step completed' : 'step';
+        }
+
+        async function testConnection() {
+            const url = document.getElementById('erpnext_url').value.trim();
+            const apiKey = document.getElementById('erpnext_api_key').value.trim();
+            const apiSecret = document.getElementById('erpnext_api_secret').value.trim();
+
+            if (!url || !apiKey || !apiSecret) {
+                showStatus('error', 'Please fill in all fields before testing');
+                return;
+            }
+
+            showStatus('testing', 'Testing connection to ERPNext...');
+            updateSteps(1);
+
+            try {
+                const response = await fetch('/setup/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        erpnext_url: url,
+                        erpnext_api_key: apiKey,
+                        erpnext_api_secret: apiSecret
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('success', 'Connection successful! Connected as: ' + result.user);
+                    document.getElementById('saveBtn').disabled = false;
+                    connectionTested = true;
+                    updateSteps(2);
+
+                    // Mark inputs as success
+                    document.querySelectorAll('.form-input').forEach(el => {
+                        el.classList.remove('error');
+                        el.classList.add('success');
+                    });
+                } else {
+                    showStatus('error', 'Connection failed: ' + result.error);
+                    document.getElementById('saveBtn').disabled = true;
+                    connectionTested = false;
+
+                    // Mark inputs as error
+                    document.querySelectorAll('.form-input').forEach(el => {
+                        el.classList.remove('success');
+                        el.classList.add('error');
+                    });
+                }
+            } catch (error) {
+                showStatus('error', 'Connection test failed: ' + error.message);
+                document.getElementById('saveBtn').disabled = true;
+                connectionTested = false;
+            }
+        }
+
+        document.getElementById('setupForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            if (!connectionTested) {
+                showStatus('error', 'Please test the connection before saving');
+                return;
+            }
+
+            const url = document.getElementById('erpnext_url').value.trim();
+            const apiKey = document.getElementById('erpnext_api_key').value.trim();
+            const apiSecret = document.getElementById('erpnext_api_secret').value.trim();
+
+            showStatus('testing', 'Saving configuration...');
+
+            try {
+                const response = await fetch('/setup/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        erpnext_url: url,
+                        erpnext_api_key: apiKey,
+                        erpnext_api_secret: apiSecret
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('success', 'Configuration saved successfully! Redirecting...');
+                    updateSteps(3);
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showStatus('error', 'Failed to save: ' + result.error);
+                }
+            } catch (error) {
+                showStatus('error', 'Failed to save configuration: ' + error.message);
+            }
+        });
+
+        // Re-test connection if fields change
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', function() {
+                if (connectionTested) {
+                    connectionTested = false;
+                    document.getElementById('saveBtn').disabled = true;
+                    this.classList.remove('success', 'error');
+                    hideStatus();
+                    updateSteps(0);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

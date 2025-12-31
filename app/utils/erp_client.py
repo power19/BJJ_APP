@@ -2,10 +2,8 @@
 import requests
 import json
 from typing import Dict, Any, List
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from .config import get_config
 
 class ERPNextClient:
     def __init__(self, base_url: str = "", api_key: str = "", api_secret: str = ""):
@@ -309,8 +307,12 @@ class ERPNextClient:
             return []  # Return an empty list in case of an exception
 
 def get_erp_client():
+    """Get ERPNext client using configuration from setup."""
+    config = get_config()
+    erp_config = config.get_erpnext_config()
+
     return ERPNextClient(
-        base_url=os.getenv("ERPNEXT_URL"),
-        api_key=os.getenv("ERPNEXT_API_KEY"),
-        api_secret=os.getenv("ERPNEXT_API_SECRET")
+        base_url=erp_config['url'],
+        api_key=erp_config['api_key'],
+        api_secret=erp_config['api_secret']
     )
