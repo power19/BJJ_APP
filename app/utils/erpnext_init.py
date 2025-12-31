@@ -11,6 +11,56 @@ from .config import get_config
 
 # Define the custom doctypes required for the gym app
 GYM_DOCTYPES = {
+    "Belt Rank": {
+        "doctype": "DocType",
+        "name": "Belt Rank",
+        "module": "Custom",
+        "custom": 1,
+        "autoname": "field:rank_name",
+        "is_submittable": 0,
+        "fields": [
+            {"fieldname": "rank_name", "fieldtype": "Data", "label": "Rank Name", "reqd": 1, "unique": 1},
+            {"fieldname": "rank_order", "fieldtype": "Int", "label": "Rank Order", "reqd": 1, "description": "Lower = beginner"},
+            {"fieldname": "color", "fieldtype": "Color", "label": "Belt Color"},
+            {"fieldname": "days_required", "fieldtype": "Int", "label": "Days Required for Next Rank", "default": "0"},
+            {"fieldname": "stripes_available", "fieldtype": "Int", "label": "Stripes Available", "default": "4"},
+            {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
+            {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "default": "1"},
+        ],
+        "permissions": [
+            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
+            {"role": "Sales User", "read": 1},
+        ]
+    },
+    "Gym Staff": {
+        "doctype": "DocType",
+        "name": "Gym Staff",
+        "module": "Custom",
+        "custom": 1,
+        "autoname": "field:staff_name",
+        "is_submittable": 0,
+        "fields": [
+            {"fieldname": "staff_name", "fieldtype": "Data", "label": "Full Name", "reqd": 1},
+            {"fieldname": "role", "fieldtype": "Select", "label": "Role", "options": "Coach\nHead Coach\nTreasurer\nAdmin\nReceptionist", "reqd": 1},
+            {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag", "unique": 1},
+            {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "phone", "fieldtype": "Data", "label": "Phone"},
+            {"fieldname": "email", "fieldtype": "Data", "label": "Email", "options": "Email"},
+            {"fieldname": "user", "fieldtype": "Link", "label": "Linked User", "options": "User"},
+            {"fieldname": "section_permissions", "fieldtype": "Section Break", "label": "Permissions"},
+            {"fieldname": "can_promote", "fieldtype": "Check", "label": "Can Promote Members", "default": "0"},
+            {"fieldname": "can_process_payments", "fieldtype": "Check", "label": "Can Process Payments", "default": "0"},
+            {"fieldname": "can_manage_members", "fieldtype": "Check", "label": "Can Manage Members", "default": "0"},
+            {"fieldname": "section_info", "fieldtype": "Section Break", "label": "Additional Info"},
+            {"fieldname": "current_rank", "fieldtype": "Link", "label": "Staff Belt Rank", "options": "Belt Rank"},
+            {"fieldname": "photo", "fieldtype": "Attach Image", "label": "Photo"},
+            {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "default": "1"},
+        ],
+        "permissions": [
+            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
+            {"role": "Sales User", "read": 1},
+        ]
+    },
     "Membership Type": {
         "doctype": "DocType",
         "name": "Membership Type",
@@ -20,12 +70,44 @@ GYM_DOCTYPES = {
         "is_submittable": 0,
         "fields": [
             {"fieldname": "membership_name", "fieldtype": "Data", "label": "Membership Name", "reqd": 1, "unique": 1},
-            {"fieldname": "duration_months", "fieldtype": "Int", "label": "Duration (Months)", "reqd": 1, "default": "1"},
-            {"fieldname": "price", "fieldtype": "Currency", "label": "Price", "reqd": 1},
+            {"fieldname": "membership_category", "fieldtype": "Select", "label": "Category",
+             "options": "Subscription\nCommitment\nDay Pass\nStrip Card\nPrivate Lesson\nRental\nRegistration", "reqd": 1},
+            {"fieldname": "duration_months", "fieldtype": "Int", "label": "Duration (Months)", "default": "1"},
+            {"fieldname": "duration_days", "fieldtype": "Int", "label": "Duration (Days)", "default": "0", "description": "For day passes"},
+            {"fieldname": "sessions_included", "fieldtype": "Int", "label": "Sessions Included", "default": "0", "description": "For strip cards"},
+            {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "price", "fieldtype": "Currency", "label": "Price (SRD)", "reqd": 1},
+            {"fieldname": "requires_commitment", "fieldtype": "Check", "label": "Requires Commitment", "default": "0"},
+            {"fieldname": "commitment_months", "fieldtype": "Int", "label": "Commitment Period (Months)", "default": "0"},
+            {"fieldname": "is_recurring", "fieldtype": "Check", "label": "Is Recurring", "default": "0"},
+            {"fieldname": "section_settings", "fieldtype": "Section Break", "label": "Settings"},
+            {"fieldname": "counts_towards_rank", "fieldtype": "Check", "label": "Counts Towards Rank Progression", "default": "1"},
             {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
             {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "default": "1"},
-            {"fieldname": "max_freeze_days", "fieldtype": "Int", "label": "Max Freeze Days", "default": "0"},
-            {"fieldname": "classes_per_week", "fieldtype": "Int", "label": "Classes Per Week", "description": "0 = Unlimited"},
+        ],
+        "permissions": [
+            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
+            {"role": "Sales User", "read": 1},
+        ]
+    },
+    "Gym Class Type": {
+        "doctype": "DocType",
+        "name": "Gym Class Type",
+        "module": "Custom",
+        "custom": 1,
+        "autoname": "field:class_name",
+        "is_submittable": 0,
+        "fields": [
+            {"fieldname": "class_name", "fieldtype": "Data", "label": "Class Name", "reqd": 1, "unique": 1},
+            {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
+            {"fieldname": "duration_minutes", "fieldtype": "Int", "label": "Duration (Minutes)", "default": "60"},
+            {"fieldname": "max_capacity", "fieldtype": "Int", "label": "Max Capacity"},
+            {"fieldname": "allowed_member_types", "fieldtype": "Select", "label": "Allowed Member Types",
+             "options": "All\nAdults Only\nKids Only\nTeens Only", "default": "All"},
+            {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "color", "fieldtype": "Color", "label": "Color"},
+            {"fieldname": "counts_towards_rank", "fieldtype": "Check", "label": "Counts Towards Rank", "default": "1"},
+            {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "default": "1"},
         ],
         "permissions": [
             {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
@@ -41,24 +123,85 @@ GYM_DOCTYPES = {
         "is_submittable": 0,
         "fields": [
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "GYM-.YYYY.-", "reqd": 1},
-            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "reqd": 1},
-            {"fieldname": "email", "fieldtype": "Data", "label": "Email", "options": "Email"},
-            {"fieldname": "phone", "fieldtype": "Data", "label": "Phone"},
-            {"fieldname": "date_of_birth", "fieldtype": "Date", "label": "Date of Birth"},
-            {"fieldname": "gender", "fieldtype": "Select", "label": "Gender", "options": "\nMale\nFemale\nOther"},
-            {"fieldname": "address", "fieldtype": "Small Text", "label": "Address"},
-            {"fieldname": "emergency_contact", "fieldtype": "Data", "label": "Emergency Contact"},
-            {"fieldname": "emergency_phone", "fieldtype": "Data", "label": "Emergency Phone"},
+            {"fieldname": "member_type", "fieldtype": "Select", "label": "Member Type",
+             "options": "Adult\nTeenager\nChild", "reqd": 1, "default": "Adult"},
+            {"fieldname": "first_name", "fieldtype": "Data", "label": "First Name", "reqd": 1},
+            {"fieldname": "last_name", "fieldtype": "Data", "label": "Last Name", "reqd": 1},
+            {"fieldname": "full_name", "fieldtype": "Data", "label": "Full Name", "read_only": 1},
             {"fieldname": "column_break_1", "fieldtype": "Column Break"},
             {"fieldname": "photo", "fieldtype": "Attach Image", "label": "Photo"},
             {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag", "unique": 1},
-            {"fieldname": "customer", "fieldtype": "Link", "label": "Linked Customer", "options": "Customer"},
-            {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nInactive\nSuspended\nExpired", "default": "Active"},
-            {"fieldname": "join_date", "fieldtype": "Date", "label": "Join Date"},
-            {"fieldname": "section_membership", "fieldtype": "Section Break", "label": "Current Membership"},
+            {"fieldname": "status", "fieldtype": "Select", "label": "Status",
+             "options": "Active\nSuspended\nCancelled\nExpired", "default": "Active"},
+
+            {"fieldname": "section_contact", "fieldtype": "Section Break", "label": "Contact Information"},
+            {"fieldname": "email", "fieldtype": "Data", "label": "Email", "options": "Email"},
+            {"fieldname": "phone", "fieldtype": "Data", "label": "Phone Number", "reqd": 1},
+            {"fieldname": "address", "fieldtype": "Small Text", "label": "Address"},
+            {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+            {"fieldname": "date_of_birth", "fieldtype": "Date", "label": "Date of Birth"},
+            {"fieldname": "gender", "fieldtype": "Select", "label": "Gender", "options": "\nMale\nFemale\nOther"},
+            {"fieldname": "emergency_contact", "fieldtype": "Data", "label": "Emergency Contact Name"},
+            {"fieldname": "emergency_phone", "fieldtype": "Data", "label": "Emergency Phone"},
+
+            {"fieldname": "section_parent", "fieldtype": "Section Break", "label": "Parent/Guardian (For Minors)",
+             "depends_on": "eval:doc.member_type=='Child' || doc.member_type=='Teenager'"},
+            {"fieldname": "parent_member", "fieldtype": "Link", "label": "Parent/Guardian", "options": "Gym Member",
+             "description": "Link to adult member responsible for payment"},
+            {"fieldname": "parent_name", "fieldtype": "Data", "label": "Parent Name", "fetch_from": "parent_member.full_name", "read_only": 1},
+            {"fieldname": "parent_phone", "fieldtype": "Data", "label": "Parent Phone", "fetch_from": "parent_member.phone", "read_only": 1},
+
+            {"fieldname": "section_rank", "fieldtype": "Section Break", "label": "Belt Rank & Progression"},
+            {"fieldname": "current_rank", "fieldtype": "Link", "label": "Current Belt Rank", "options": "Belt Rank"},
+            {"fieldname": "current_stripes", "fieldtype": "Int", "label": "Current Stripes", "default": "0"},
+            {"fieldname": "days_at_current_rank", "fieldtype": "Int", "label": "Training Days at Current Rank", "default": "0", "read_only": 1},
+            {"fieldname": "column_break_3", "fieldtype": "Column Break"},
+            {"fieldname": "total_training_days", "fieldtype": "Int", "label": "Total Training Days", "default": "0", "read_only": 1},
+            {"fieldname": "last_promotion_date", "fieldtype": "Date", "label": "Last Promotion Date"},
+            {"fieldname": "eligible_for_promotion", "fieldtype": "Check", "label": "Eligible for Promotion", "read_only": 1},
+
+            {"fieldname": "section_membership", "fieldtype": "Section Break", "label": "Membership Details"},
             {"fieldname": "current_membership_type", "fieldtype": "Link", "label": "Membership Type", "options": "Membership Type"},
-            {"fieldname": "membership_start_date", "fieldtype": "Date", "label": "Start Date"},
-            {"fieldname": "membership_end_date", "fieldtype": "Date", "label": "End Date"},
+            {"fieldname": "membership_start_date", "fieldtype": "Date", "label": "Membership Start Date"},
+            {"fieldname": "membership_end_date", "fieldtype": "Date", "label": "Membership End Date"},
+            {"fieldname": "column_break_4", "fieldtype": "Column Break"},
+            {"fieldname": "payment_status", "fieldtype": "Select", "label": "Payment Status",
+             "options": "Current\nOverdue\nGrace Period", "default": "Current"},
+            {"fieldname": "remaining_sessions", "fieldtype": "Int", "label": "Remaining Sessions", "default": "0",
+             "description": "For strip card members"},
+            {"fieldname": "join_date", "fieldtype": "Date", "label": "Join Date"},
+
+            {"fieldname": "section_linked", "fieldtype": "Section Break", "label": "Linked Records"},
+            {"fieldname": "customer", "fieldtype": "Link", "label": "Linked Customer", "options": "Customer"},
+
+            {"fieldname": "section_notes", "fieldtype": "Section Break", "label": "Notes"},
+            {"fieldname": "notes", "fieldtype": "Text", "label": "Notes"},
+        ],
+        "permissions": [
+            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
+            {"role": "Sales User", "read": 1, "write": 1, "create": 1},
+        ]
+    },
+    "Rank History": {
+        "doctype": "DocType",
+        "name": "Rank History",
+        "module": "Custom",
+        "custom": 1,
+        "autoname": "naming_series:",
+        "is_submittable": 0,
+        "fields": [
+            {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "RANK-.YYYY.-", "reqd": 1},
+            {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
+            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
+            {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "from_rank", "fieldtype": "Link", "label": "From Rank", "options": "Belt Rank"},
+            {"fieldname": "to_rank", "fieldtype": "Link", "label": "To Rank", "options": "Belt Rank", "reqd": 1},
+            {"fieldname": "section_details", "fieldtype": "Section Break", "label": "Promotion Details"},
+            {"fieldname": "promotion_date", "fieldtype": "Date", "label": "Promotion Date", "reqd": 1},
+            {"fieldname": "days_in_previous_rank", "fieldtype": "Int", "label": "Days in Previous Rank", "read_only": 1},
+            {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+            {"fieldname": "promoted_by", "fieldtype": "Link", "label": "Promoted By", "options": "Gym Staff", "reqd": 1},
+            {"fieldname": "promoter_rfid_verified", "fieldtype": "Check", "label": "RFID Verified", "read_only": 1},
             {"fieldname": "section_notes", "fieldtype": "Section Break", "label": "Notes"},
             {"fieldname": "notes", "fieldtype": "Text", "label": "Notes"},
         ],
@@ -77,38 +220,24 @@ GYM_DOCTYPES = {
         "fields": [
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "ATT-.YYYY.-.#####", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
-            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.member_name", "read_only": 1},
-            {"fieldname": "check_in_time", "fieldtype": "Datetime", "label": "Check In Time", "reqd": 1},
-            {"fieldname": "check_out_time", "fieldtype": "Datetime", "label": "Check Out Time"},
-            {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag"},
+            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
+            {"fieldname": "attendance_date", "fieldtype": "Date", "label": "Attendance Date", "reqd": 1},
             {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "check_in_time", "fieldtype": "Time", "label": "Check In Time"},
+            {"fieldname": "check_out_time", "fieldtype": "Time", "label": "Check Out Time"},
+            {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag Used"},
+            {"fieldname": "section_class", "fieldtype": "Section Break", "label": "Class Information"},
             {"fieldname": "class_type", "fieldtype": "Link", "label": "Class Type", "options": "Gym Class Type"},
+            {"fieldname": "counts_towards_rank", "fieldtype": "Check", "label": "Counts Towards Rank", "default": "1",
+             "description": "Only counts if payment is current"},
+            {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+            {"fieldname": "payment_was_current", "fieldtype": "Check", "label": "Payment Was Current", "read_only": 1},
             {"fieldname": "checked_in_by", "fieldtype": "Link", "label": "Checked In By", "options": "User"},
             {"fieldname": "notes", "fieldtype": "Small Text", "label": "Notes"},
         ],
         "permissions": [
             {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
             {"role": "Sales User", "read": 1, "write": 1, "create": 1},
-        ]
-    },
-    "Gym Class Type": {
-        "doctype": "DocType",
-        "name": "Gym Class Type",
-        "module": "Custom",
-        "custom": 1,
-        "autoname": "field:class_name",
-        "is_submittable": 0,
-        "fields": [
-            {"fieldname": "class_name", "fieldtype": "Data", "label": "Class Name", "reqd": 1, "unique": 1},
-            {"fieldname": "description", "fieldtype": "Small Text", "label": "Description"},
-            {"fieldname": "duration_minutes", "fieldtype": "Int", "label": "Duration (Minutes)", "default": "60"},
-            {"fieldname": "max_capacity", "fieldtype": "Int", "label": "Max Capacity"},
-            {"fieldname": "color", "fieldtype": "Color", "label": "Color"},
-            {"fieldname": "is_active", "fieldtype": "Check", "label": "Is Active", "default": "1"},
-        ],
-        "permissions": [
-            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1},
-            {"role": "Sales User", "read": 1},
         ]
     },
     "Membership": {
@@ -121,17 +250,56 @@ GYM_DOCTYPES = {
         "fields": [
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "MEM-.YYYY.-", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
-            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.member_name", "read_only": 1},
+            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
             {"fieldname": "membership_type", "fieldtype": "Link", "label": "Membership Type", "options": "Membership Type", "reqd": 1},
             {"fieldname": "column_break_1", "fieldtype": "Column Break"},
             {"fieldname": "start_date", "fieldtype": "Date", "label": "Start Date", "reqd": 1},
             {"fieldname": "end_date", "fieldtype": "Date", "label": "End Date", "reqd": 1},
-            {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nExpired\nCancelled\nFrozen", "default": "Active"},
+            {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nExpired\nCancelled\nSuspended", "default": "Active"},
             {"fieldname": "section_payment", "fieldtype": "Section Break", "label": "Payment Details"},
-            {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount"},
-            {"fieldname": "paid_amount", "fieldtype": "Currency", "label": "Paid Amount"},
+            {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount (SRD)"},
+            {"fieldname": "paid_amount", "fieldtype": "Currency", "label": "Paid Amount (SRD)"},
             {"fieldname": "payment_status", "fieldtype": "Select", "label": "Payment Status", "options": "Unpaid\nPartially Paid\nPaid", "default": "Unpaid"},
+            {"fieldname": "column_break_3", "fieldtype": "Column Break"},
+            {"fieldname": "sessions_remaining", "fieldtype": "Int", "label": "Sessions Remaining", "description": "For strip cards"},
             {"fieldname": "invoice", "fieldtype": "Link", "label": "Invoice", "options": "Sales Invoice"},
+        ],
+        "permissions": [
+            {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1},
+            {"role": "Sales User", "read": 1, "write": 1, "create": 1, "submit": 1},
+        ]
+    },
+    "Gym Payment": {
+        "doctype": "DocType",
+        "name": "Gym Payment",
+        "module": "Custom",
+        "custom": 1,
+        "autoname": "naming_series:",
+        "is_submittable": 1,
+        "fields": [
+            {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "PAY-.YYYY.-", "reqd": 1},
+            {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
+            {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
+            {"fieldname": "member_rfid", "fieldtype": "Data", "label": "Member RFID", "read_only": 1},
+            {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+            {"fieldname": "payment_date", "fieldtype": "Date", "label": "Payment Date", "reqd": 1},
+            {"fieldname": "payment_type", "fieldtype": "Select", "label": "Payment Type",
+             "options": "Registration\nMonthly Subscription\nDay Pass\nStrip Card\nPrivate Lesson\nGi Rental\nOther", "reqd": 1},
+            {"fieldname": "section_amount", "fieldtype": "Section Break", "label": "Amount"},
+            {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount (SRD)", "reqd": 1},
+            {"fieldname": "payment_method", "fieldtype": "Select", "label": "Payment Method",
+             "options": "Cash\nBank Transfer\nCard\nMobile Payment", "default": "Cash"},
+            {"fieldname": "column_break_2", "fieldtype": "Column Break"},
+            {"fieldname": "membership", "fieldtype": "Link", "label": "Related Membership", "options": "Membership"},
+            {"fieldname": "reference", "fieldtype": "Data", "label": "Reference Number"},
+            {"fieldname": "section_verification", "fieldtype": "Section Break", "label": "Verification"},
+            {"fieldname": "processed_by", "fieldtype": "Link", "label": "Processed By", "options": "Gym Staff", "reqd": 1},
+            {"fieldname": "processor_rfid_verified", "fieldtype": "Check", "label": "Staff RFID Verified", "read_only": 1},
+            {"fieldname": "column_break_3", "fieldtype": "Column Break"},
+            {"fieldname": "status", "fieldtype": "Select", "label": "Status",
+             "options": "Pending\nCompleted\nCancelled\nRefunded", "default": "Pending"},
+            {"fieldname": "section_notes", "fieldtype": "Section Break", "label": "Notes"},
+            {"fieldname": "notes", "fieldtype": "Text", "label": "Notes"},
         ],
         "permissions": [
             {"role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 1, "cancel": 1},
@@ -148,11 +316,13 @@ GYM_DOCTYPES = {
         "fields": [
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "HND-.YYYY.-", "reqd": 1},
             {"fieldname": "handover_date", "fieldtype": "Date", "label": "Handover Date", "reqd": 1},
-            {"fieldname": "from_user", "fieldtype": "Link", "label": "From User", "options": "User", "reqd": 1},
-            {"fieldname": "to_user", "fieldtype": "Link", "label": "To User", "options": "User", "reqd": 1},
+            {"fieldname": "from_staff", "fieldtype": "Link", "label": "From Staff", "options": "Gym Staff", "reqd": 1},
+            {"fieldname": "to_staff", "fieldtype": "Link", "label": "To Staff", "options": "Gym Staff", "reqd": 1},
             {"fieldname": "column_break_1", "fieldtype": "Column Break"},
-            {"fieldname": "total_amount", "fieldtype": "Currency", "label": "Total Amount", "reqd": 1},
+            {"fieldname": "total_amount", "fieldtype": "Currency", "label": "Total Amount (SRD)", "reqd": 1},
             {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Pending\nCompleted\nCancelled", "default": "Pending"},
+            {"fieldname": "from_rfid_verified", "fieldtype": "Check", "label": "From Staff RFID Verified", "read_only": 1},
+            {"fieldname": "to_rfid_verified", "fieldtype": "Check", "label": "To Staff RFID Verified", "read_only": 1},
             {"fieldname": "section_payments", "fieldtype": "Section Break", "label": "Payments"},
             {"fieldname": "payments", "fieldtype": "Table", "label": "Payments", "options": "Payment Handover Item"},
             {"fieldname": "section_notes", "fieldtype": "Section Break", "label": "Notes"},
@@ -170,14 +340,125 @@ GYM_DOCTYPES = {
         "custom": 1,
         "istable": 1,
         "fields": [
-            {"fieldname": "payment_entry", "fieldtype": "Link", "label": "Payment Entry", "options": "Payment Entry"},
+            {"fieldname": "gym_payment", "fieldtype": "Link", "label": "Gym Payment", "options": "Gym Payment"},
             {"fieldname": "payment_date", "fieldtype": "Date", "label": "Payment Date"},
-            {"fieldname": "customer", "fieldtype": "Link", "label": "Customer", "options": "Customer"},
-            {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount"},
+            {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member"},
+            {"fieldname": "amount", "fieldtype": "Currency", "label": "Amount (SRD)"},
             {"fieldname": "payment_type", "fieldtype": "Data", "label": "Payment Type"},
         ],
     },
 }
+
+
+# BJJ Belt Ranks
+BJJ_BELT_RANKS = [
+    {"rank_name": "White Belt", "rank_order": 1, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4},
+    {"rank_name": "Blue Belt", "rank_order": 2, "color": "#0066CC", "days_required": 100, "stripes_available": 4},
+    {"rank_name": "Purple Belt", "rank_order": 3, "color": "#6B21A8", "days_required": 200, "stripes_available": 4},
+    {"rank_name": "Brown Belt", "rank_order": 4, "color": "#8B4513", "days_required": 300, "stripes_available": 4},
+    {"rank_name": "Black Belt", "rank_order": 5, "color": "#000000", "days_required": 400, "stripes_available": 6},
+]
+
+# Kids Belt Ranks (optional)
+KIDS_BELT_RANKS = [
+    {"rank_name": "White Belt (Kids)", "rank_order": 1, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4},
+    {"rank_name": "Grey Belt", "rank_order": 2, "color": "#808080", "days_required": 50, "stripes_available": 4},
+    {"rank_name": "Yellow Belt", "rank_order": 3, "color": "#FFD700", "days_required": 75, "stripes_available": 4},
+    {"rank_name": "Orange Belt", "rank_order": 4, "color": "#FF8C00", "days_required": 100, "stripes_available": 4},
+    {"rank_name": "Green Belt", "rank_order": 5, "color": "#228B22", "days_required": 125, "stripes_available": 4},
+]
+
+# Default Membership Types (Suriname pricing in SRD)
+DEFAULT_MEMBERSHIP_TYPES = [
+    {
+        "membership_name": "Registration Fee",
+        "membership_category": "Registration",
+        "duration_months": 0,
+        "price": 350,
+        "is_recurring": 0,
+        "counts_towards_rank": 0,
+        "description": "One-time registration fee (Inschrijfgeld)"
+    },
+    {
+        "membership_name": "12-Month Commitment",
+        "membership_category": "Commitment",
+        "duration_months": 1,
+        "price": 600,
+        "is_recurring": 1,
+        "requires_commitment": 1,
+        "commitment_months": 12,
+        "counts_towards_rank": 1,
+        "description": "Monthly contribution with 12-month commitment (SRD 600/maand)"
+    },
+    {
+        "membership_name": "Month-to-Month",
+        "membership_category": "Subscription",
+        "duration_months": 1,
+        "price": 700,
+        "is_recurring": 1,
+        "requires_commitment": 0,
+        "counts_towards_rank": 1,
+        "description": "Flexible month-to-month membership (SRD 700/maand)"
+    },
+    {
+        "membership_name": "Day Training",
+        "membership_category": "Day Pass",
+        "duration_days": 1,
+        "duration_months": 0,
+        "price": 150,
+        "is_recurring": 0,
+        "counts_towards_rank": 1,
+        "description": "Single day training pass (Dagtraining SRD 150)"
+    },
+    {
+        "membership_name": "Gi Rental",
+        "membership_category": "Rental",
+        "duration_days": 1,
+        "duration_months": 0,
+        "price": 150,
+        "is_recurring": 0,
+        "counts_towards_rank": 0,
+        "description": "Gi/kimono rental per session (Gi huur SRD 150)"
+    },
+    {
+        "membership_name": "10-Lesson Strip Card",
+        "membership_category": "Strip Card",
+        "duration_months": 0,
+        "sessions_included": 10,
+        "price": 1350,
+        "is_recurring": 0,
+        "counts_towards_rank": 1,
+        "description": "Strip card for 10 lessons (Strippenkaart SRD 1350)"
+    },
+    {
+        "membership_name": "Private Lesson",
+        "membership_category": "Private Lesson",
+        "duration_days": 1,
+        "duration_months": 0,
+        "price": 1000,
+        "is_recurring": 0,
+        "counts_towards_rank": 1,
+        "description": "Private one-on-one lesson (Privélessen SRD 1000/sessie)"
+    },
+]
+
+# Default Class Types
+DEFAULT_CLASS_TYPES = [
+    {"class_name": "BJJ Fundamentals", "duration_minutes": 60, "color": "#10b981",
+     "allowed_member_types": "All", "counts_towards_rank": 1, "description": "Basic techniques for all levels"},
+    {"class_name": "BJJ Advanced", "duration_minutes": 90, "color": "#3b82f6",
+     "allowed_member_types": "Adults Only", "counts_towards_rank": 1, "description": "Advanced techniques for blue belt and above"},
+    {"class_name": "No-Gi", "duration_minutes": 60, "color": "#8b5cf6",
+     "allowed_member_types": "All", "counts_towards_rank": 1, "description": "Training without the gi"},
+    {"class_name": "Open Mat", "duration_minutes": 120, "color": "#f59e0b",
+     "allowed_member_types": "All", "counts_towards_rank": 1, "description": "Free rolling and drilling"},
+    {"class_name": "Kids BJJ", "duration_minutes": 45, "color": "#ec4899",
+     "allowed_member_types": "Kids Only", "counts_towards_rank": 1, "description": "Brazilian Jiu-Jitsu for children"},
+    {"class_name": "Teens BJJ", "duration_minutes": 60, "color": "#14b8a6",
+     "allowed_member_types": "Teens Only", "counts_towards_rank": 1, "description": "Brazilian Jiu-Jitsu for teenagers"},
+    {"class_name": "Competition Training", "duration_minutes": 90, "color": "#ef4444",
+     "allowed_member_types": "All", "counts_towards_rank": 1, "description": "Intensive training for competitors"},
+]
 
 
 class ERPNextInitializer:
@@ -269,83 +550,68 @@ class ERPNextInitializer:
 
         # Order matters - create parent doctypes first
         ordered_doctypes = [
+            "Belt Rank",
+            "Gym Staff",
             "Membership Type",
             "Gym Class Type",
             "Gym Member",
+            "Rank History",
             "Gym Attendance",
             "Membership",
+            "Gym Payment",
             "Payment Handover Item",
             "Payment Handover",
         ]
 
         for doctype_name in ordered_doctypes:
             success, message = self.create_doctype(doctype_name)
-            results[doctype_name] = (success, message)
+            results[doctype_name] = {"success": success, "message": message}
 
-            # If creation failed (and it's not because it already exists), stop
+            # If creation failed (and it's not because it already exists), log it
             if not success and "already exists" not in message:
                 print(f"Failed to create {doctype_name}: {message}")
 
         return results
 
+    def _create_record(self, doctype: str, data: dict) -> Tuple[bool, str]:
+        """Create a single record in ERPNext."""
+        try:
+            response = requests.post(
+                f"{self._url}/api/resource/{doctype}",
+                headers=self._headers,
+                json=data,
+                timeout=10
+            )
+            if response.status_code in [200, 201]:
+                return True, "Created"
+            elif response.status_code == 409 or "DuplicateEntryError" in response.text:
+                return True, "Already exists"
+            else:
+                return False, response.text[:200]
+        except Exception as e:
+            return False, str(e)
+
     def create_default_data(self) -> Dict[str, Tuple[bool, str]]:
-        """Create default data like membership types and class types."""
+        """Create default data like belt ranks, membership types and class types."""
         results = {}
 
         if not self._setup_connection():
-            return {"error": (False, "ERPNext not configured")}
+            return {"error": {"success": False, "message": "ERPNext not configured"}}
 
-        # Default Membership Types
-        default_memberships = [
-            {"membership_name": "Monthly", "duration_months": 1, "price": 100, "is_active": 1},
-            {"membership_name": "Quarterly", "duration_months": 3, "price": 270, "is_active": 1},
-            {"membership_name": "Semi-Annual", "duration_months": 6, "price": 500, "is_active": 1},
-            {"membership_name": "Annual", "duration_months": 12, "price": 900, "is_active": 1},
-            {"membership_name": "Day Pass", "duration_months": 0, "price": 15, "is_active": 1},
-        ]
+        # Create Belt Ranks
+        for rank in BJJ_BELT_RANKS:
+            success, message = self._create_record("Belt Rank", rank)
+            results[f"Rank: {rank['rank_name']}"] = {"success": success, "message": message}
 
-        for membership in default_memberships:
-            try:
-                response = requests.post(
-                    f"{self._url}/api/resource/Membership Type",
-                    headers=self._headers,
-                    json=membership,
-                    timeout=10
-                )
-                if response.status_code in [200, 201]:
-                    results[f"Membership: {membership['membership_name']}"] = (True, "Created")
-                elif response.status_code == 409:  # Conflict - already exists
-                    results[f"Membership: {membership['membership_name']}"] = (True, "Already exists")
-                else:
-                    results[f"Membership: {membership['membership_name']}"] = (False, response.text)
-            except Exception as e:
-                results[f"Membership: {membership['membership_name']}"] = (False, str(e))
+        # Create Membership Types
+        for membership in DEFAULT_MEMBERSHIP_TYPES:
+            success, message = self._create_record("Membership Type", membership)
+            results[f"Membership: {membership['membership_name']}"] = {"success": success, "message": message}
 
-        # Default Class Types
-        default_classes = [
-            {"class_name": "BJJ Fundamentals", "duration_minutes": 60, "color": "#10b981", "is_active": 1},
-            {"class_name": "BJJ Advanced", "duration_minutes": 90, "color": "#3b82f6", "is_active": 1},
-            {"class_name": "No-Gi", "duration_minutes": 60, "color": "#8b5cf6", "is_active": 1},
-            {"class_name": "Open Mat", "duration_minutes": 120, "color": "#f59e0b", "is_active": 1},
-            {"class_name": "Kids BJJ", "duration_minutes": 45, "color": "#ec4899", "is_active": 1},
-        ]
-
-        for class_type in default_classes:
-            try:
-                response = requests.post(
-                    f"{self._url}/api/resource/Gym Class Type",
-                    headers=self._headers,
-                    json=class_type,
-                    timeout=10
-                )
-                if response.status_code in [200, 201]:
-                    results[f"Class: {class_type['class_name']}"] = (True, "Created")
-                elif response.status_code == 409:
-                    results[f"Class: {class_type['class_name']}"] = (True, "Already exists")
-                else:
-                    results[f"Class: {class_type['class_name']}"] = (False, response.text)
-            except Exception as e:
-                results[f"Class: {class_type['class_name']}"] = (False, str(e))
+        # Create Class Types
+        for class_type in DEFAULT_CLASS_TYPES:
+            success, message = self._create_record("Gym Class Type", class_type)
+            results[f"Class: {class_type['class_name']}"] = {"success": success, "message": message}
 
         return results
 
