@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+
+{% block title %}Check In{% endblock %}
+{% block nav_title %}Attendance{% endblock %}
+
+{% block content %}
+<div class="scan-container">
+    <!-- Idle State - Waiting for RFID -->
+    <div class="scan-state" id="idleState">
+        <div class="scan-icon pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" />
+                <path fill-rule="evenodd" d="M3 11.25h18v6a3 3 0 01-3 3H6a3 3 0 01-3-3v-6zm2.25 3a.75.75 0 01.75-.75h6a.75.75 0 010 1.5H6a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h3a.75.75 0 000-1.5H6z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <h1 class="scan-title">Scan Your Card</h1>
+        <p class="scan-subtitle">Hold your RFID card near the reader</p>
+
+        <div class="rfid-input-container">
+            <input type="text"
+                   id="rfidInput"
+                   class="rfid-input"
+                   placeholder="RFID will appear here..."
+                   autocomplete="off"
+                   autofocus>
+        </div>
+
+        <div class="mode-toggle">
+            <button class="mode-btn active" data-mode="checkin">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                </svg>
+                Check In
+            </button>
+            <button class="mode-btn" data-mode="stats">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z" clip-rule="evenodd" />
+                </svg>
+                My Stats
+            </button>
+        </div>
+    </div>
+
+    <!-- Processing State -->
+    <div class="scan-state hidden" id="processingState">
+        <div class="spinner-large"></div>
+        <h2 class="scan-title">Processing...</h2>
+    </div>
+
+    <!-- Success State - Check In -->
+    <div class="scan-state hidden" id="successState">
+        <div class="member-welcome">
+            <div class="member-photo" id="memberPhoto">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h1 class="welcome-name" id="memberName">Welcome!</h1>
+            <div class="welcome-message" id="welcomeMessage">
+                <span class="check-icon">✓</span>
+                <span>Check-in successful!</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="daysAtRank">0</div>
+                <div class="stat-label">Days at Rank</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalDays">0</div>
+                <div class="stat-label">Total Days</div>
+            </div>
+        </div>
+
+        <div class="rank-display" id="rankDisplay">
+            <div class="belt-visual" id="beltVisual"></div>
+            <div class="rank-info">
+                <span class="rank-name" id="rankName">White Belt</span>
+                <div class="stripes" id="stripesDisplay"></div>
+            </div>
+        </div>
+
+        <div class="payment-warning hidden" id="paymentWarning">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+            </svg>
+            <span>Payment overdue - Training day not counted towards rank</span>
+        </div>
+    </div>
+
+    <!-- Stats State -->
+    <div class="scan-state hidden" id="statsState">
+        <div class="member-welcome compact">
+            <div class="member-photo" id="statsPhoto">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h2 class="welcome-name" id="statsName">Member</h2>
+        </div>
+
+        <div class="stats-rank-display" id="statsRankDisplay">
+            <div class="belt-visual large" id="statsBeltVisual"></div>
+            <div class="rank-info">
+                <span class="rank-name" id="statsRankName">White Belt</span>
+                <div class="stripes" id="statsStripesDisplay"></div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-header">
+                <span>Progress to Next Belt</span>
+                <span id="progressText">0 / 100 days</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid detailed">
+            <div class="stat-card">
+                <div class="stat-value" id="statsDaysAtRank">0</div>
+                <div class="stat-label">Days at Current Rank</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statsTotalDays">0</div>
+                <div class="stat-label">Total Training Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statsLast30">0</div>
+                <div class="stat-label">Last 30 Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statsDaysToGo">0</div>
+                <div class="stat-label">Days to Next Belt</div>
+            </div>
+        </div>
+
+        <div class="promotion-eligible hidden" id="promotionEligible">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" />
+            </svg>
+            <span>Eligible for Promotion!</span>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="scan-state hidden" id="errorState">
+        <div class="error-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" />
+            </svg>
+        </div>
+        <h2 class="error-title" id="errorTitle">Card Not Found</h2>
+        <p class="error-message" id="errorMessage">Please check with reception</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .scan-container {
+        min-height: calc(100vh - 60px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+    }
+
+    .scan-state {
+        width: 100%;
+        max-width: 480px;
+        text-align: center;
+    }
+
+    .scan-state.hidden {
+        display: none;
+    }
+
+    /* Idle State */
+    .scan-icon {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 2rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .scan-icon svg {
+        width: 60px;
+        height: 60px;
+        color: #3b82f6;
+    }
+
+    .scan-icon.pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .scan-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+
+    .scan-subtitle {
+        font-size: 1.125rem;
+        color: #94a3b8;
+        margin-bottom: 2rem;
+    }
+
+    .rfid-input-container {
+        margin-bottom: 2rem;
+    }
+
+    .rfid-input {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1.25rem;
+        text-align: center;
+        background: rgba(15, 23, 42, 0.6);
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 16px;
+        color: #f8fafc;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .rfid-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .rfid-input::placeholder {
+        color: #64748b;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+    }
+
+    .mode-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 1.5rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+        color: #94a3b8;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mode-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mode-btn.active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+        color: #3b82f6;
+    }
+
+    .mode-btn:hover:not(.active) {
+        background: rgba(51, 65, 85, 0.5);
+    }
+
+    /* Processing State */
+    .spinner-large {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 2rem;
+        border: 4px solid rgba(59, 130, 246, 0.2);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Success State */
+    .member-welcome {
+        margin-bottom: 2rem;
+    }
+
+    .member-welcome.compact {
+        margin-bottom: 1.5rem;
+    }
+
+    .member-photo {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        overflow: hidden;
+        background: rgba(51, 65, 85, 0.5);
+        border: 4px solid #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .member-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .member-photo svg {
+        width: 60px;
+        height: 60px;
+        color: #64748b;
+    }
+
+    .welcome-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-message {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 20px;
+        color: #34d399;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .check-icon {
+        font-size: 1.25rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-grid.detailed {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-card {
+        padding: 1.25rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+    }
+
+    /* Rank Display */
+    .rank-display, .stats-rank-display {
+        padding: 1.5rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+    }
+
+    .belt-visual {
+        height: 24px;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        background: #FFFFFF;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .belt-visual.large {
+        height: 32px;
+    }
+
+    .rank-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .rank-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+
+    .stripes {
+        display: flex;
+        gap: 4px;
+    }
+
+    .stripe {
+        width: 8px;
+        height: 24px;
+        background: #FFFFFF;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 2px;
+    }
+
+    .stripe.earned {
+        background: #000000;
+        border-color: #000000;
+    }
+
+    /* Progress Section */
+    .progress-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .progress-bar {
+        height: 12px;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 6px;
+        transition: width 0.5s ease;
+    }
+
+    /* Payment Warning */
+    .payment-warning {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: 12px;
+        color: #fbbf24;
+        font-size: 0.875rem;
+    }
+
+    .payment-warning svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .payment-warning.hidden {
+        display: none;
+    }
+
+    /* Promotion Eligible */
+    .promotion-eligible {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+        border: 1px solid rgba(251, 191, 36, 0.4);
+        border-radius: 12px;
+        color: #fbbf24;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .promotion-eligible svg {
+        width: 24px;
+        height: 24px;
+        color: #f59e0b;
+    }
+
+    .promotion-eligible.hidden {
+        display: none;
+    }
+
+    /* Error State */
+    .error-icon {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1.5rem;
+        background: rgba(239, 68, 68, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-icon svg {
+        width: 50px;
+        height: 50px;
+        color: #ef4444;
+    }
+
+    .error-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-message {
+        color: #94a3b8;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const rfidInput = document.getElementById('rfidInput');
+    const idleState = document.getElementById('idleState');
+    const processingState = document.getElementById('processingState');
+    const successState = document.getElementById('successState');
+    const statsState = document.getElementById('statsState');
+    const errorState = document.getElementById('errorState');
+
+    let currentMode = 'checkin';
+    let resetTimeout = null;
+
+    // Focus input on load and when clicking anywhere
+    document.addEventListener('click', () => rfidInput.focus());
+    rfidInput.focus();
+
+    // Mode toggle
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentMode = btn.dataset.mode;
+            rfidInput.focus();
+        });
+    });
+
+    // Handle RFID input
+    let inputBuffer = '';
+    let inputTimeout = null;
+
+    rfidInput.addEventListener('input', (e) => {
+        clearTimeout(inputTimeout);
+        inputBuffer = e.target.value;
+
+        // Wait for complete RFID (usually comes fast from reader)
+        inputTimeout = setTimeout(() => {
+            if (inputBuffer.length >= 4) {
+                processRFID(inputBuffer);
+            }
+        }, 200);
+    });
+
+    rfidInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (rfidInput.value.length >= 4) {
+                processRFID(rfidInput.value);
+            }
+        }
+    });
+
+    function showState(state) {
+        [idleState, processingState, successState, statsState, errorState].forEach(s => {
+            s.classList.add('hidden');
+        });
+        state.classList.remove('hidden');
+    }
+
+    function resetToIdle() {
+        clearTimeout(resetTimeout);
+        showState(idleState);
+        rfidInput.value = '';
+        inputBuffer = '';
+        rfidInput.focus();
+    }
+
+    async function processRFID(rfid) {
+        rfid = rfid.trim();
+        if (!rfid) return;
+
+        showState(processingState);
+        rfidInput.value = '';
+        inputBuffer = '';
+
+        try {
+            if (currentMode === 'stats') {
+                await showStats(rfid);
+            } else {
+                await checkIn(rfid);
+            }
+        } catch (error) {
+            showError('Connection Error', error.message);
+        }
+    }
+
+    async function checkIn(rfid) {
+        const response = await fetch('/api/v1/attendance/check-in', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rfid_tag: rfid })
+        });
+
+        const data = await response.json();
+
+        if (!data.success && !data.already_checked_in) {
+            showError(
+                data.error === 'Member not found' ? 'Card Not Found' : 'Check-in Failed',
+                data.error || 'Please try again'
+            );
+            return;
+        }
+
+        const member = data.member;
+
+        // Set photo
+        const photoEl = document.getElementById('memberPhoto');
+        if (member.photo) {
+            photoEl.innerHTML = `<img src="${member.photo}" alt="Photo">`;
+        } else {
+            photoEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+            </svg>`;
+        }
+
+        // Set name
+        document.getElementById('memberName').textContent = member.full_name || 'Welcome!';
+
+        // Set message
+        const msgEl = document.getElementById('welcomeMessage');
+        if (data.already_checked_in) {
+            msgEl.innerHTML = '<span class="check-icon">✓</span><span>Already checked in today</span>';
+        } else {
+            msgEl.innerHTML = '<span class="check-icon">✓</span><span>Check-in successful!</span>';
+        }
+
+        // Set stats
+        document.getElementById('daysAtRank').textContent = member.days_at_current_rank || 0;
+        document.getElementById('totalDays').textContent = member.total_training_days || 0;
+
+        // Payment warning
+        const warningEl = document.getElementById('paymentWarning');
+        if (!member.payment_current && !data.already_checked_in) {
+            warningEl.classList.remove('hidden');
+        } else {
+            warningEl.classList.add('hidden');
+        }
+
+        showState(successState);
+
+        // Reset after 5 seconds
+        resetTimeout = setTimeout(resetToIdle, 5000);
+    }
+
+    async function showStats(rfid) {
+        const response = await fetch(`/api/v1/attendance/stats/${rfid}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            showError('Card Not Found', 'Please check with reception');
+            return;
+        }
+
+        const member = data.member;
+
+        // Set photo
+        const photoEl = document.getElementById('statsPhoto');
+        if (member.photo) {
+            photoEl.innerHTML = `<img src="${member.photo}" alt="Photo">`;
+        }
+
+        // Set name
+        document.getElementById('statsName').textContent = member.full_name;
+
+        // Set rank display
+        if (member.rank) {
+            document.getElementById('statsBeltVisual').style.background = member.rank.color || '#FFFFFF';
+            document.getElementById('statsRankName').textContent = member.rank.name;
+
+            // Stripes
+            const stripesEl = document.getElementById('statsStripesDisplay');
+            const totalStripes = member.rank.stripes_available || 4;
+            const earnedStripes = member.current_stripes || 0;
+            let stripesHtml = '';
+            for (let i = 0; i < totalStripes; i++) {
+                stripesHtml += `<div class="stripe ${i < earnedStripes ? 'earned' : ''}"></div>`;
+            }
+            stripesEl.innerHTML = stripesHtml;
+
+            // Progress bar
+            const daysRequired = member.rank.days_required || 100;
+            const daysAtRank = member.days_at_current_rank || 0;
+            const progress = Math.min(100, (daysAtRank / daysRequired) * 100);
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${daysAtRank} / ${daysRequired} days`;
+        }
+
+        // Stats
+        document.getElementById('statsDaysAtRank').textContent = member.days_at_current_rank || 0;
+        document.getElementById('statsTotalDays').textContent = member.total_training_days || 0;
+        document.getElementById('statsLast30').textContent = member.training_days_last_30 || 0;
+        document.getElementById('statsDaysToGo').textContent = member.days_to_next_rank || '-';
+
+        // Promotion eligible
+        const promoEl = document.getElementById('promotionEligible');
+        if (member.eligible_for_promotion) {
+            promoEl.classList.remove('hidden');
+        } else {
+            promoEl.classList.add('hidden');
+        }
+
+        showState(statsState);
+
+        // Reset after 8 seconds
+        resetTimeout = setTimeout(resetToIdle, 8000);
+    }
+
+    function showError(title, message) {
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMessage').textContent = message;
+        showState(errorState);
+
+        // Reset after 4 seconds
+        resetTimeout = setTimeout(resetToIdle, 4000);
+    }
+
+    // Keep input focused
+    setInterval(() => {
+        if (document.activeElement !== rfidInput && !processingState.classList.contains('hidden') === false) {
+            rfidInput.focus();
+        }
+    }, 1000);
+</script>
+{% endblock %}
