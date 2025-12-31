@@ -1,0 +1,944 @@
+{% extends "base.html" %}
+
+{% block title %}Payment{% endblock %}
+{% block nav_title %}Payment{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <!-- Step 1: Scan Member -->
+    <div class="payment-step" id="step1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2>Scan Member Card</h2>
+                <p>Have the member scan their RFID card</p>
+            </div>
+        </div>
+
+        <div class="scan-area">
+            <div class="scan-icon pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" />
+                    <path fill-rule="evenodd" d="M3 11.25h18v6a3 3 0 01-3 3H6a3 3 0 01-3-3v-6zm2.25 3a.75.75 0 01.75-.75h6a.75.75 0 010 1.5H6a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h3a.75.75 0 000-1.5H6z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <input type="text" id="memberRfid" class="rfid-input" placeholder="Waiting for RFID..." autocomplete="off" autofocus>
+        </div>
+    </div>
+
+    <!-- Step 2: Member Info & Payment Selection -->
+    <div class="payment-step hidden" id="step2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2>Select Payment</h2>
+                <p>Choose payment type and confirm amount</p>
+            </div>
+        </div>
+
+        <div class="member-card" id="memberCard">
+            <div class="member-photo" id="memberPhoto">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="member-details">
+                <h3 id="memberName">Member Name</h3>
+                <div class="member-status" id="memberStatus">
+                    <span class="status-badge">Active</span>
+                    <span class="payment-badge" id="paymentBadge">Current</span>
+                </div>
+                <p class="membership-info" id="membershipInfo">No membership</p>
+            </div>
+        </div>
+
+        <div class="payment-options">
+            <h4>Payment Type</h4>
+            <div class="option-grid" id="paymentTypes">
+                <!-- Filled dynamically -->
+            </div>
+
+            <div class="amount-section">
+                <label for="paymentAmount">Amount (SRD)</label>
+                <input type="number" id="paymentAmount" class="amount-input" min="0" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="method-section">
+                <label>Payment Method</label>
+                <div class="method-grid">
+                    <button class="method-btn active" data-method="Cash">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 7.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
+                            <path fill-rule="evenodd" d="M1.5 4.875C1.5 3.839 2.34 3 3.375 3h17.25c1.035 0 1.875.84 1.875 1.875v9.75c0 1.036-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 011.5 14.625v-9.75zM8.25 9.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM18.75 9a.75.75 0 00-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 00.75-.75V9.75a.75.75 0 00-.75-.75h-.008zM4.5 9.75A.75.75 0 015.25 9h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H5.25a.75.75 0 01-.75-.75V9.75z" clip-rule="evenodd" />
+                        </svg>
+                        Cash
+                    </button>
+                    <button class="method-btn" data-method="Card">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" />
+                            <path fill-rule="evenodd" d="M1.5 9.75v6.75a3 3 0 003 3h15a3 3 0 003-3V9.75H1.5zm3.75 3.75a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5H5.25z" clip-rule="evenodd" />
+                        </svg>
+                        Card
+                    </button>
+                    <button class="method-btn" data-method="Bank Transfer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.584 2.376a.75.75 0 01.832 0l9 6a.75.75 0 11-.832 1.248L12 3.901 3.416 9.624a.75.75 0 01-.832-1.248l9-6z" />
+                            <path fill-rule="evenodd" d="M20.25 10.332v9.918H21a.75.75 0 010 1.5H3a.75.75 0 010-1.5h.75v-9.918a.75.75 0 01.634-.74A49.109 49.109 0 0112 9c2.59 0 5.134.202 7.616.592a.75.75 0 01.634.74zm-7.5 2.418a.75.75 0 00-1.5 0v6.75a.75.75 0 001.5 0v-6.75zm3-.75a.75.75 0 01.75.75v6.75a.75.75 0 01-1.5 0v-6.75a.75.75 0 01.75-.75zM9 12.75a.75.75 0 00-1.5 0v6.75a.75.75 0 001.5 0v-6.75z" clip-rule="evenodd" />
+                        </svg>
+                        Transfer
+                    </button>
+                    <button class="method-btn" data-method="Mobile Payment">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10.5 18.75a.75.75 0 000 1.5h3a.75.75 0 000-1.5h-3z" />
+                            <path fill-rule="evenodd" d="M8.625.75A3.375 3.375 0 005.25 4.125v15.75a3.375 3.375 0 003.375 3.375h6.75a3.375 3.375 0 003.375-3.375V4.125A3.375 3.375 0 0015.375.75h-6.75zM7.5 4.125C7.5 3.504 8.004 3 8.625 3H9.75v.375c0 .621.504 1.125 1.125 1.125h2.25c.621 0 1.125-.504 1.125-1.125V3h1.125c.621 0 1.125.504 1.125 1.125v15.75c0 .621-.504 1.125-1.125 1.125h-6.75A1.125 1.125 0 017.5 19.875V4.125z" clip-rule="evenodd" />
+                        </svg>
+                        Mobile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="proceedBtn" disabled>Proceed to Authorization</button>
+        </div>
+    </div>
+
+    <!-- Step 3: Staff Authorization -->
+    <div class="payment-step hidden" id="step3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2>Staff Authorization</h2>
+                <p>Staff must scan their card to confirm payment</p>
+            </div>
+        </div>
+
+        <div class="payment-summary" id="paymentSummary">
+            <div class="summary-row">
+                <span>Member</span>
+                <span id="summaryMember">-</span>
+            </div>
+            <div class="summary-row">
+                <span>Payment Type</span>
+                <span id="summaryType">-</span>
+            </div>
+            <div class="summary-row">
+                <span>Method</span>
+                <span id="summaryMethod">-</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total Amount</span>
+                <span id="summaryAmount">SRD 0.00</span>
+            </div>
+        </div>
+
+        <div class="scan-area staff">
+            <div class="scan-icon pulse orange">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <p class="scan-instruction">Staff: Scan your card to authorize</p>
+            <input type="text" id="staffRfid" class="rfid-input" placeholder="Waiting for staff RFID..." autocomplete="off">
+        </div>
+
+        <button class="btn btn-secondary btn-block" id="backToStep2">Back</button>
+    </div>
+
+    <!-- Step 4: Processing -->
+    <div class="payment-step hidden" id="step4">
+        <div class="processing-state">
+            <div class="spinner-large"></div>
+            <h2>Processing Payment...</h2>
+            <p>Please wait</p>
+        </div>
+    </div>
+
+    <!-- Step 5: Success -->
+    <div class="payment-step hidden" id="step5">
+        <div class="success-state">
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h2>Payment Successful!</h2>
+            <div class="success-details">
+                <p class="success-amount" id="successAmount">SRD 0.00</p>
+                <p class="success-member" id="successMember">Member Name</p>
+                <p class="success-id" id="successId">Payment ID: -</p>
+            </div>
+            <button class="btn btn-primary btn-block" id="newPaymentBtn">New Payment</button>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="payment-step hidden" id="errorState">
+        <div class="error-state">
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h2 id="errorTitle">Error</h2>
+            <p id="errorMessage">Something went wrong</p>
+            <button class="btn btn-primary btn-block" id="retryBtn">Try Again</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .payment-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    .payment-step {
+        animation: fadeIn 0.3s ease;
+    }
+
+    .payment-step.hidden {
+        display: none;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Step Header */
+    .step-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .step-info h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .step-info p {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    /* Scan Area */
+    .scan-area {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+    }
+
+    .scan-area.staff {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .scan-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: rgba(59, 130, 246, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .scan-icon svg {
+        width: 40px;
+        height: 40px;
+        color: #3b82f6;
+    }
+
+    .scan-icon.orange {
+        background: rgba(245, 158, 11, 0.15);
+    }
+
+    .scan-icon.orange svg {
+        color: #f59e0b;
+    }
+
+    .scan-icon.pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .scan-instruction {
+        color: #f59e0b;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .rfid-input {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.125rem;
+        text-align: center;
+        background: rgba(15, 23, 42, 0.5);
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        color: #f8fafc;
+        outline: none;
+    }
+
+    .rfid-input:focus {
+        border-color: #3b82f6;
+    }
+
+    /* Member Card */
+    .member-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+    }
+
+    .member-photo {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: rgba(51, 65, 85, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .member-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .member-photo svg {
+        width: 32px;
+        height: 32px;
+        color: #64748b;
+    }
+
+    .member-details h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .member-status {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .status-badge, .payment-badge {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.5rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+    }
+
+    .payment-badge {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .payment-badge.overdue {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+
+    .membership-info {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+    }
+
+    /* Payment Options */
+    .payment-options h4 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 0.75rem;
+    }
+
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .option-btn {
+        padding: 0.875rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+        color: #e2e8f0;
+        font-size: 0.8125rem;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .option-btn:hover {
+        background: rgba(51, 65, 85, 0.5);
+    }
+
+    .option-btn.active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    .option-btn .price {
+        display: block;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    /* Amount Section */
+    .amount-section {
+        margin-bottom: 1.25rem;
+    }
+
+    .amount-section label {
+        display: block;
+        font-size: 0.875rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+    }
+
+    .amount-input {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        background: rgba(15, 23, 42, 0.5);
+        border: 2px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+        color: #f8fafc;
+        outline: none;
+    }
+
+    .amount-input:focus {
+        border-color: #3b82f6;
+    }
+
+    /* Method Section */
+    .method-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .method-section label {
+        display: block;
+        font-size: 0.875rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+    }
+
+    .method-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+    }
+
+    .method-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.75rem 0.5rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 10px;
+        color: #94a3b8;
+        font-size: 0.6875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .method-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .method-btn.active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    /* Payment Summary */
+    .payment-summary {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.9375rem;
+        color: #94a3b8;
+    }
+
+    .summary-row span:last-child {
+        color: #e2e8f0;
+        font-weight: 500;
+    }
+
+    .summary-row.total {
+        border-top: 1px solid rgba(71, 85, 105, 0.3);
+        margin-top: 0.5rem;
+        padding-top: 1rem;
+        font-size: 1.125rem;
+    }
+
+    .summary-row.total span:last-child {
+        color: #3b82f6;
+        font-weight: 700;
+    }
+
+    /* Processing & Success States */
+    .processing-state, .success-state, .error-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .spinner-large {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1.5rem;
+        border: 4px solid rgba(59, 130, 246, 0.2);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: rgba(16, 185, 129, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .success-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #34d399;
+    }
+
+    .success-details {
+        margin: 1.5rem 0;
+    }
+
+    .success-amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #34d399;
+        margin-bottom: 0.5rem;
+    }
+
+    .success-member {
+        font-size: 1.125rem;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .success-id {
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: rgba(239, 68, 68, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #ef4444;
+    }
+
+    .error-state h2 {
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-state p {
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // State
+    let currentMember = null;
+    let currentStaff = null;
+    let selectedType = null;
+    let selectedMethod = 'Cash';
+    let membershipTypes = [];
+
+    // Elements
+    const steps = {
+        1: document.getElementById('step1'),
+        2: document.getElementById('step2'),
+        3: document.getElementById('step3'),
+        4: document.getElementById('step4'),
+        5: document.getElementById('step5'),
+        error: document.getElementById('errorState')
+    };
+
+    const memberRfid = document.getElementById('memberRfid');
+    const staffRfid = document.getElementById('staffRfid');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const proceedBtn = document.getElementById('proceedBtn');
+
+    // Show step
+    function showStep(step) {
+        Object.values(steps).forEach(s => s.classList.add('hidden'));
+        steps[step].classList.remove('hidden');
+
+        if (step === 1) {
+            memberRfid.focus();
+        } else if (step === 3) {
+            staffRfid.focus();
+        }
+    }
+
+    // Member RFID handling
+    let memberTimeout = null;
+    memberRfid.addEventListener('input', (e) => {
+        clearTimeout(memberTimeout);
+        memberTimeout = setTimeout(() => {
+            if (e.target.value.length >= 4) {
+                lookupMember(e.target.value);
+            }
+        }, 200);
+    });
+
+    memberRfid.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && memberRfid.value.length >= 4) {
+            lookupMember(memberRfid.value);
+        }
+    });
+
+    // Staff RFID handling
+    let staffTimeout = null;
+    staffRfid.addEventListener('input', (e) => {
+        clearTimeout(staffTimeout);
+        staffTimeout = setTimeout(() => {
+            if (e.target.value.length >= 4) {
+                verifyStaff(e.target.value);
+            }
+        }, 200);
+    });
+
+    staffRfid.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && staffRfid.value.length >= 4) {
+            verifyStaff(staffRfid.value);
+        }
+    });
+
+    // Lookup member
+    async function lookupMember(rfid) {
+        memberRfid.value = '';
+        showStep(4); // Show processing
+
+        try {
+            const response = await fetch(`/api/v1/payment/rfid/member/${rfid}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                showError('Member Not Found', data.error || 'Card not recognized');
+                return;
+            }
+
+            currentMember = data.member;
+            membershipTypes = data.membership_types || [];
+
+            // Populate member card
+            document.getElementById('memberName').textContent = currentMember.full_name;
+
+            if (currentMember.photo) {
+                document.getElementById('memberPhoto').innerHTML = `<img src="${currentMember.photo}" alt="Photo">`;
+            }
+
+            const paymentBadge = document.getElementById('paymentBadge');
+            if (currentMember.payment_status === 'Overdue') {
+                paymentBadge.textContent = 'Overdue';
+                paymentBadge.classList.add('overdue');
+            } else {
+                paymentBadge.textContent = currentMember.payment_status || 'Current';
+                paymentBadge.classList.remove('overdue');
+            }
+
+            if (currentMember.membership) {
+                document.getElementById('membershipInfo').textContent =
+                    `${currentMember.membership.name} - Expires: ${currentMember.membership_end_date || 'N/A'}`;
+            } else {
+                document.getElementById('membershipInfo').textContent = 'No active membership';
+            }
+
+            // Populate payment types
+            populatePaymentTypes();
+
+            showStep(2);
+        } catch (error) {
+            showError('Connection Error', error.message);
+        }
+    }
+
+    // Populate payment types
+    function populatePaymentTypes() {
+        const container = document.getElementById('paymentTypes');
+        container.innerHTML = '';
+
+        membershipTypes.forEach(type => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.type = type.membership_name;
+            btn.dataset.price = type.price;
+            btn.innerHTML = `
+                ${type.membership_name}
+                <span class="price">SRD ${type.price.toLocaleString()}</span>
+            `;
+            btn.addEventListener('click', () => selectPaymentType(btn, type));
+            container.appendChild(btn);
+        });
+    }
+
+    // Select payment type
+    function selectPaymentType(btn, type) {
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedType = type;
+        paymentAmount.value = type.price;
+        validateForm();
+    }
+
+    // Payment method selection
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedMethod = btn.dataset.method;
+        });
+    });
+
+    // Amount change
+    paymentAmount.addEventListener('input', validateForm);
+
+    // Validate form
+    function validateForm() {
+        const amount = parseFloat(paymentAmount.value);
+        proceedBtn.disabled = !selectedType || !amount || amount <= 0;
+    }
+
+    // Proceed to staff authorization
+    proceedBtn.addEventListener('click', () => {
+        document.getElementById('summaryMember').textContent = currentMember.full_name;
+        document.getElementById('summaryType').textContent = selectedType.membership_name;
+        document.getElementById('summaryMethod').textContent = selectedMethod;
+        document.getElementById('summaryAmount').textContent = `SRD ${parseFloat(paymentAmount.value).toLocaleString()}`;
+        showStep(3);
+    });
+
+    // Back to step 2
+    document.getElementById('backToStep2').addEventListener('click', () => {
+        staffRfid.value = '';
+        showStep(2);
+    });
+
+    // Cancel button
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        resetPayment();
+    });
+
+    // Verify staff
+    async function verifyStaff(rfid) {
+        staffRfid.value = '';
+
+        try {
+            const response = await fetch(`/api/v1/payment/rfid/staff/${rfid}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                alert(data.error || 'Staff not authorized');
+                staffRfid.focus();
+                return;
+            }
+
+            currentStaff = data.staff;
+            processPayment();
+        } catch (error) {
+            alert('Error verifying staff: ' + error.message);
+            staffRfid.focus();
+        }
+    }
+
+    // Process payment
+    async function processPayment() {
+        showStep(4);
+
+        try {
+            const response = await fetch('/api/v1/payment/rfid/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    member_id: currentMember.id,
+                    staff_id: currentStaff.id,
+                    payment_type: mapPaymentType(selectedType.membership_category),
+                    amount: parseFloat(paymentAmount.value),
+                    payment_method: selectedMethod,
+                    membership_type: selectedType.membership_name
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                showError('Payment Failed', data.error || 'Could not process payment');
+                return;
+            }
+
+            // Show success
+            document.getElementById('successAmount').textContent = `SRD ${parseFloat(paymentAmount.value).toLocaleString()}`;
+            document.getElementById('successMember').textContent = data.member_name;
+            document.getElementById('successId').textContent = `Payment ID: ${data.payment_id}`;
+            showStep(5);
+
+        } catch (error) {
+            showError('Connection Error', error.message);
+        }
+    }
+
+    // Map category to payment type
+    function mapPaymentType(category) {
+        const mapping = {
+            'Subscription': 'Monthly Subscription',
+            'Commitment': 'Monthly Subscription',
+            'Day Pass': 'Day Pass',
+            'Strip Card': 'Strip Card',
+            'Private Lesson': 'Private Lesson',
+            'Rental': 'Gi Rental',
+            'Registration': 'Registration'
+        };
+        return mapping[category] || 'Other';
+    }
+
+    // Show error
+    function showError(title, message) {
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMessage').textContent = message;
+        showStep('error');
+    }
+
+    // Retry button
+    document.getElementById('retryBtn').addEventListener('click', resetPayment);
+
+    // New payment button
+    document.getElementById('newPaymentBtn').addEventListener('click', resetPayment);
+
+    // Reset payment
+    function resetPayment() {
+        currentMember = null;
+        currentStaff = null;
+        selectedType = null;
+        selectedMethod = 'Cash';
+        paymentAmount.value = '';
+        memberRfid.value = '';
+        staffRfid.value = '';
+        document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.method-btn[data-method="Cash"]').classList.add('active');
+        proceedBtn.disabled = true;
+        showStep(1);
+    }
+
+    // Initialize
+    showStep(1);
+
+    // Keep input focused
+    setInterval(() => {
+        if (steps[1].classList.contains('hidden') === false) {
+            memberRfid.focus();
+        } else if (steps[3].classList.contains('hidden') === false) {
+            staffRfid.focus();
+        }
+    }, 1000);
+</script>
+{% endblock %}
