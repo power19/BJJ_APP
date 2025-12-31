@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Invictus BJJ</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: #f8fafc;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 0% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%),
+                #0f172a;
+            z-index: -1;
+        }
+
+        .container {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 1.5rem 0 2rem;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.25rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+        }
+
+        .logo img {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo svg {
+            width: 44px;
+            height: 44px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1rem;
+        }
+
+        /* Navigation Grid */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            flex: 1;
+            align-content: start;
+        }
+
+        /* Navigation Card */
+        .nav-card {
+            position: relative;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 20px;
+            padding: 1.5rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 140px;
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-card:hover::before,
+        .nav-card:focus::before {
+            opacity: 1;
+        }
+
+        .nav-card:hover,
+        .nav-card:focus {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-card:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        /* Card icon container */
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .card-icon svg {
+            width: 28px;
+            height: 28px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            opacity: 0.15;
+        }
+
+        /* Color variants */
+        .nav-card.blue .card-icon {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        }
+        .nav-card.blue .card-icon svg { color: white; }
+
+        .nav-card.green .card-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+        .nav-card.green .card-icon svg { color: white; }
+
+        .nav-card.purple .card-icon {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+        }
+        .nav-card.purple .card-icon svg { color: white; }
+
+        .nav-card.orange .card-icon {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+        }
+        .nav-card.orange .card-icon svg { color: white; }
+
+        .nav-card.pink .card-icon {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            box-shadow: 0 8px 24px rgba(236, 72, 153, 0.3);
+        }
+        .nav-card.pink .card-icon svg { color: white; }
+
+        .nav-card.slate .card-icon {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 0 8px 24px rgba(100, 116, 139, 0.3);
+        }
+        .nav-card.slate .card-icon svg { color: white; }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-desc {
+            font-size: 0.8125rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        /* Full width card */
+        .nav-card.full-width {
+            grid-column: span 2;
+            flex-direction: row;
+            text-align: left;
+            padding: 1.25rem 1.5rem;
+            min-height: auto;
+            gap: 1rem;
+        }
+
+        .nav-card.full-width .card-icon {
+            margin-bottom: 0;
+            flex-shrink: 0;
+        }
+
+        .nav-card.full-width .card-content {
+            flex: 1;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 1.5rem 0 0.5rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .footer p {
+            color: #475569;
+            font-size: 0.8125rem;
+        }
+
+        .version {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            color: #64748b;
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 20px;
+        }
+
+        /* Tablet and larger */
+        @media (min-width: 640px) {
+            .container {
+                padding: 2rem;
+                max-width: 700px;
+            }
+
+            .header {
+                padding: 2rem 0 2.5rem;
+            }
+
+            .logo {
+                width: 96px;
+                height: 96px;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-grid {
+                gap: 1.25rem;
+            }
+
+            .nav-card {
+                padding: 2rem;
+                min-height: 160px;
+            }
+
+            .card-icon {
+                width: 64px;
+                height: 64px;
+            }
+
+            .card-icon svg {
+                width: 32px;
+                height: 32px;
+            }
+
+            .card-title {
+                font-size: 1.125rem;
+            }
+        }
+
+        /* Landscape phone */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                max-width: 100%;
+                padding: 1rem 2rem;
+            }
+
+            .header {
+                padding: 0.75rem 0 1rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                text-align: left;
+            }
+
+            .logo {
+                width: 48px;
+                height: 48px;
+                margin: 0;
+                border-radius: 12px;
+            }
+
+            .logo svg {
+                width: 28px;
+                height: 28px;
+            }
+
+            .header h1 {
+                font-size: 1.25rem;
+                margin-bottom: 0;
+            }
+
+            .header p {
+                display: none;
+            }
+
+            .nav-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.75rem;
+            }
+
+            .nav-card {
+                min-height: 100px;
+                padding: 1rem;
+            }
+
+            .nav-card.full-width {
+                grid-column: span 1;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .nav-card.full-width .card-icon {
+                margin-bottom: 0.5rem;
+            }
+
+            .card-icon {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 0.5rem;
+            }
+
+            .card-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .card-title {
+                font-size: 0.875rem;
+            }
+
+            .card-desc {
+                display: none;
+            }
+
+            .footer {
+                display: none;
+            }
+        }
+
+        /* Animation on load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nav-card {
+            animation: fadeInUp 0.5s ease backwards;
+        }
+
+        .nav-card:nth-child(1) { animation-delay: 0.1s; }
+        .nav-card:nth-child(2) { animation-delay: 0.15s; }
+        .nav-card:nth-child(3) { animation-delay: 0.2s; }
+        .nav-card:nth-child(4) { animation-delay: 0.25s; }
+        .nav-card:nth-child(5) { animation-delay: 0.3s; }
+        .nav-card:nth-child(6) { animation-delay: 0.35s; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <svg style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Invictus BJJ</h1>
+                <p>Gym Management System</p>
+            </div>
+        </header>
+
+        <nav class="nav-grid">
+            <!-- Attendance Check -->
+            <a href="/api/v1/attendance" class="nav-card green">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <span class="card-title">Attendance</span>
+                <span class="card-desc">Check-in members</span>
+            </a>
+
+            <!-- Payment -->
+            <a href="/api/v1/payment" class="nav-card blue">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" />
+                        <path fill-rule="evenodd" d="M1.5 9.75v6.75a3 3 0 003 3h15a3 3 0 003-3V9.75H1.5zm3.75 3.75a.75.75 0 000 1.5h2.5a.75.75 0 000-1.5H5.25z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <span class="card-title">Payment</span>
+                <span class="card-desc">Process payments</span>
+            </a>
+
+            <!-- Handovers -->
+            <a href="/api/v1/payment/handover/dashboard" class="nav-card purple">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.25 4.533A9.707 9.707 0 006 3a9.735 9.735 0 00-3.25.555.75.75 0 00-.5.707v14.25a.75.75 0 001 .707A8.237 8.237 0 016 18.75c1.995 0 3.823.707 5.25 1.886V4.533zM12.75 20.636A8.214 8.214 0 0118 18.75c.966 0 1.89.166 2.75.47a.75.75 0 001-.708V4.262a.75.75 0 00-.5-.707A9.735 9.735 0 0018 3a9.707 9.707 0 00-5.25 1.533v16.103z" />
+                    </svg>
+                </div>
+                <span class="card-title">Handovers</span>
+                <span class="card-desc">Transfer payments</span>
+            </a>
+
+            <!-- Billing / Overview -->
+            <a href="/overview" class="nav-card orange">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M2.25 13.5a8.25 8.25 0 018.25-8.25.75.75 0 01.75.75v6.75H18a.75.75 0 01.75.75 8.25 8.25 0 01-16.5 0z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M12.75 3a.75.75 0 01.75-.75 8.25 8.25 0 018.25 8.25.75.75 0 01-.75.75h-7.5a.75.75 0 01-.75-.75V3z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <span class="card-title">Overview</span>
+                <span class="card-desc">Dashboard & billing</span>
+            </a>
+
+            <!-- Enrollment -->
+            <a href="/api/v1/enrollment" class="nav-card pink">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z" />
+                    </svg>
+                </div>
+                <span class="card-title">Enrollment</span>
+                <span class="card-desc">New students</span>
+            </a>
+
+            <!-- Settings -->
+            <a href="/setup" class="nav-card slate">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.057a.75.75 0 01-.563.563l-1.24.178a1.875 1.875 0 00-1.567 1.85v1.566c0 .917.663 1.699 1.567 1.85l1.24.178a.75.75 0 01.563.563l.178 1.24a1.875 1.875 0 001.85 1.567h1.566c.917 0 1.699-.663 1.85-1.567l.178-1.24a.75.75 0 01.563-.563l1.24-.178a1.875 1.875 0 001.567-1.85V8.484c0-.917-.663-1.699-1.567-1.85l-1.24-.178a.75.75 0 01-.563-.563l-.178-1.24a1.875 1.875 0 00-1.85-1.567h-1.566zM10.5 6a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" clip-rule="evenodd" />
+                        <path d="M10.5 10.5a3.5 3.5 0 117 0 3.5 3.5 0 01-7 0z" />
+                    </svg>
+                </div>
+                <span class="card-title">Settings</span>
+                <span class="card-desc">Configuration</span>
+            </a>
+        </nav>
+
+        <footer class="footer">
+            <p>Invictus BJJ Management System</p>
+            <span class="version">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
+                </svg>
+                v1.0.0
+            </span>
+        </footer>
+    </div>
+</body>
+</html>

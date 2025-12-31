@@ -62,4 +62,4 @@ app.include_router(handover.router, prefix="/api/v1/payment/handover", tags=["ha
 @app.get("/")
 async def index(request: Request):
     """Home page."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("home.html", {"request": request})
