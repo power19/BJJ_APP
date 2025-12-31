@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
+from typing import Optional
 import requests
 
 from ..utils.config import get_config
@@ -79,7 +80,7 @@ async def save_config(setup_request: SetupRequest):
         return {"success": False, "error": "Failed to save configuration file"}
 
 
-def _test_erp_connection(url: str, api_key: str, api_secret: str) -> str | None:
+def _test_erp_connection(url: str, api_key: str, api_secret: str) -> Optional[str]:
     """
     Test ERPNext connection and return the logged-in user if successful.
 
