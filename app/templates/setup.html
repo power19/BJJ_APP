@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Setup - Invictus BJJ</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            min-height: 100dvh;
+            color: #f8fafc;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Background gradient animation */
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                #0f172a;
+            z-index: -1;
+        }
+
+        .container {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            padding-top: env(safe-area-inset-top, 1.5rem);
+            padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 0 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
+        .logo img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+
+        .logo svg {
+            width: 36px;
+            height: 36px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        /* Progress indicator */
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .progress-step {
+            width: 2.5rem;
+            height: 4px;
+            background: #334155;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: #3b82f6;
+        }
+
+        .progress-step.completed {
+            background: #22c55e;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 24px;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Status message */
+        .status {
+            padding: 1rem 1.25rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        .status.show {
+            display: flex;
+        }
+
+        .status.testing {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #93c5fd;
+        }
+
+        .status.success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2.5px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Form */
+        .form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-fields {
+            flex: 1;
+        }
+
+        .field {
+            margin-bottom: 1.25rem;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 14px;
+            font-size: 1rem;
+            color: #f8fafc;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .input::placeholder {
+            color: #64748b;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        .input.success {
+            border-color: #22c55e;
+        }
+
+        .input.error {
+            border-color: #ef4444;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            margin: -0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-icon:hover {
+            color: #94a3b8;
+        }
+
+        .input-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .hint {
+            font-size: 0.8125rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            padding-left: 0.25rem;
+        }
+
+        /* Buttons */
+        .actions {
+            margin-top: auto;
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            padding: 1rem 1.5rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            min-height: 56px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-secondary {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid #475569;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover, .btn-secondary:focus {
+            background: rgba(71, 85, 105, 0.5);
+            border-color: #64748b;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            background: #334155;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            color: #64748b;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 1.5rem 0 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .footer a {
+            color: #64748b;
+            font-size: 0.875rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: #94a3b8;
+        }
+
+        .footer a svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Tablet and larger */
+        @media (min-width: 640px) {
+            .container {
+                padding: 2rem;
+                justify-content: center;
+            }
+
+            .card {
+                max-width: 440px;
+                margin: 0 auto;
+                flex: none;
+                padding: 2rem;
+            }
+
+            .header {
+                padding: 1rem 0 2rem;
+            }
+
+            .logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .field {
+                margin-bottom: 1.5rem;
+            }
+
+            .actions {
+                flex-direction: row;
+                gap: 1rem;
+            }
+
+            .btn {
+                flex: 1;
+            }
+        }
+
+        /* Landscape phone */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .header {
+                padding: 1rem 0;
+            }
+
+            .logo {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+            }
+
+            .logo svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .header p {
+                display: none;
+            }
+
+            .progress-bar {
+                margin: 0.75rem 0;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .field {
+                margin-bottom: 0.75rem;
+            }
+
+            .input {
+                padding: 0.75rem 1rem;
+            }
+
+            .btn {
+                min-height: 48px;
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        /* Dark mode scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <svg style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h1>Invictus BJJ</h1>
+            <p>Connect to ERPNext</p>
+        </header>
+
+        <div class="progress-bar">
+            <div class="progress-step active" id="step1"></div>
+            <div class="progress-step" id="step2"></div>
+            <div class="progress-step" id="step3"></div>
+        </div>
+
+        <main class="card">
+            <div class="status" id="status">
+                <span class="status-icon" id="statusIcon"></span>
+                <span id="statusText"></span>
+            </div>
+
+            <form class="form" id="setupForm">
+                <div class="form-fields">
+                    <div class="field">
+                        <label class="label" for="url">ERPNext URL</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="url"
+                                id="url"
+                                name="url"
+                                class="input"
+                                placeholder="https://your-site.erpnext.com"
+                                required
+                                autocomplete="url"
+                                autocapitalize="none"
+                                spellcheck="false"
+                                value="{{ config.url if config else '' }}"
+                            >
+                        </div>
+                        <p class="hint">Your ERPNext instance address</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="key">API Key</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                id="key"
+                                name="key"
+                                class="input"
+                                placeholder="Enter API key"
+                                required
+                                autocomplete="off"
+                                autocapitalize="none"
+                                spellcheck="false"
+                                value="{{ config.api_key if config else '' }}"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label" for="secret">API Secret</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="password"
+                                id="secret"
+                                name="secret"
+                                class="input"
+                                placeholder="Enter API secret"
+                                required
+                                autocomplete="current-password"
+                                value="{{ config.api_secret if config else '' }}"
+                            >
+                            <button type="button" class="input-icon" id="togglePassword" aria-label="Toggle password visibility">
+                                <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                                <svg id="eyeClosed" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" id="testBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Test
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                        </svg>
+                        Save & Continue
+                    </button>
+                </div>
+            </form>
+        </main>
+
+        <footer class="footer">
+            <a href="https://docs.erpnext.com/docs/v14/user/manual/en/api" target="_blank" rel="noopener">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z"/>
+                </svg>
+                Need help?
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let connectionTested = false;
+
+        // Elements
+        const form = document.getElementById('setupForm');
+        const urlInput = document.getElementById('url');
+        const keyInput = document.getElementById('key');
+        const secretInput = document.getElementById('secret');
+        const testBtn = document.getElementById('testBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const togglePassword = document.getElementById('togglePassword');
+        const status = document.getElementById('status');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const inputs = [urlInput, keyInput, secretInput];
+
+        // Toggle password visibility
+        togglePassword.addEventListener('click', () => {
+            const isPassword = secretInput.type === 'password';
+            secretInput.type = isPassword ? 'text' : 'password';
+            document.getElementById('eyeOpen').style.display = isPassword ? 'none' : 'block';
+            document.getElementById('eyeClosed').style.display = isPassword ? 'block' : 'none';
+        });
+
+        // Update progress steps
+        function updateProgress(step) {
+            document.getElementById('step1').className = 'progress-step ' + (step >= 1 ? 'completed' : 'active');
+            document.getElementById('step2').className = 'progress-step ' + (step >= 2 ? 'completed' : (step === 1 ? 'active' : ''));
+            document.getElementById('step3').className = 'progress-step ' + (step >= 3 ? 'completed' : '');
+        }
+
+        // Show status message
+        function showStatus(type, message) {
+            status.className = 'status show ' + type;
+
+            if (type === 'testing') {
+                statusIcon.innerHTML = '<div class="spinner"></div>';
+            } else if (type === 'success') {
+                statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+            } else {
+                statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+            }
+
+            statusText.textContent = message;
+        }
+
+        function hideStatus() {
+            status.className = 'status';
+        }
+
+        // Mark inputs as success/error
+        function setInputState(state) {
+            inputs.forEach(input => {
+                input.classList.remove('success', 'error');
+                if (state) input.classList.add(state);
+            });
+        }
+
+        // Test connection
+        async function testConnection() {
+            const url = urlInput.value.trim();
+            const key = keyInput.value.trim();
+            const secret = secretInput.value.trim();
+
+            if (!url || !key || !secret) {
+                showStatus('error', 'Please fill in all fields');
+                return;
+            }
+
+            showStatus('testing', 'Testing connection...');
+            testBtn.disabled = true;
+            updateProgress(1);
+
+            try {
+                const response = await fetch('/setup/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        erpnext_url: url,
+                        erpnext_api_key: key,
+                        erpnext_api_secret: secret
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('success', 'Connected as ' + result.user);
+                    saveBtn.disabled = false;
+                    connectionTested = true;
+                    updateProgress(2);
+                    setInputState('success');
+                } else {
+                    showStatus('error', result.error || 'Connection failed');
+                    saveBtn.disabled = true;
+                    connectionTested = false;
+                    setInputState('error');
+                }
+            } catch (error) {
+                showStatus('error', 'Network error');
+                saveBtn.disabled = true;
+                connectionTested = false;
+                setInputState('error');
+            }
+
+            testBtn.disabled = false;
+        }
+
+        // Save configuration
+        async function saveConfig(e) {
+            e.preventDefault();
+
+            if (!connectionTested) {
+                showStatus('error', 'Test connection first');
+                return;
+            }
+
+            showStatus('testing', 'Saving...');
+            saveBtn.disabled = true;
+
+            try {
+                const response = await fetch('/setup/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        erpnext_url: urlInput.value.trim(),
+                        erpnext_api_key: keyInput.value.trim(),
+                        erpnext_api_secret: secretInput.value.trim()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showStatus('success', 'Setup complete!');
+                    updateProgress(3);
+                    setTimeout(() => window.location.href = '/', 1000);
+                } else {
+                    showStatus('error', result.error || 'Save failed');
+                    saveBtn.disabled = false;
+                }
+            } catch (error) {
+                showStatus('error', 'Save failed');
+                saveBtn.disabled = false;
+            }
+        }
+
+        // Reset on input change
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if (connectionTested) {
+                    connectionTested = false;
+                    saveBtn.disabled = true;
+                    setInputState(null);
+                    hideStatus();
+                    updateProgress(0);
+                }
+            });
+        });
+
+        // Event listeners
+        testBtn.addEventListener('click', testConnection);
+        form.addEventListener('submit', saveConfig);
+
+        // Initialize
+        updateProgress(0);
+    </script>
+</body>
+</html>
