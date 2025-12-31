@@ -1,12 +1,13 @@
 # app/routes/settings.py
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pathlib import Path
 import json
 import shutil
 import time
 import os
+import requests
 
 from ..utils.config import get_config
 
@@ -159,3 +160,137 @@ async def restore_config(config: UploadFile = File(...)):
         return JSONResponse({"success": False, "error": "Invalid JSON file"})
     except Exception as e:
         return JSONResponse({"success": False, "error": f"Restore failed: {str(e)}"})
+
+
+def _fetch_erpnext_data(url: str, api_key: str, api_secret: str, doctype: str, fields: list = None, limit: int = 0):
+    """Fetch data from ERPNext for a specific doctype."""
+    try:
+        headers = {
+            'Authorization': f'token {api_key}:{api_secret}',
+            'Content-Type': 'application/json'
+        }
+
+        params = {
+            'limit_page_length': limit if limit > 0 else 0  # 0 means no limit
+        }
+
+        if fields:
+            params['fields'] = json.dumps(fields)
+
+        response = requests.get(
+            f"{url}/api/resource/{doctype}",
+            headers=headers,
+            params=params,
+            timeout=60
+        )
+
+        if response.status_code == 200:
+            return response.json().get('data', [])
+        return []
+    except Exception as e:
+        print(f"Error fetching {doctype}: {str(e)}")
+        return []
+
+
+@router.get("/backup/erpnext")
+async def backup_erpnext():
+    """Download ERPNext data backup."""
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    erp_config = config.get_erpnext_config()
+    url = erp_config.get('url', '')
+    api_key = erp_config.get('api_key', '')
+    api_secret = erp_config.get('api_secret', '')
+
+    # Create backup data structure
+    backup_data = {
+        "app": "invictus-bjj-erpnext-backup",
+        "version": "1.0.0",
+        "backup_time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "erpnext_url": url,
+        "data": {}
+    }
+
+    # Fetch various doctypes - adjust these based on your ERPNext setup
+    doctypes_to_backup = [
+        "Customer",
+        "Gym Member",
+        "Sales Invoice",
+        "Payment Entry",
+        "Journal Entry",
+        "Membership",
+        "Membership Type",
+    ]
+
+    for doctype in doctypes_to_backup:
+        try:
+            data = _fetch_erpnext_data(url, api_key, api_secret, doctype)
+            if data:
+                backup_data["data"][doctype] = data
+                print(f"Backed up {len(data)} {doctype} records")
+        except Exception as e:
+            print(f"Could not backup {doctype}: {str(e)}")
+
+    # Write to temp file
+    backup_filename = f"erpnext_backup_{time.strftime('%Y%m%d_%H%M%S')}.json"
+    backup_path = Path("/tmp") / backup_filename
+
+    with open(backup_path, 'w') as f:
+        json.dump(backup_data, f, indent=2)
+
+    return FileResponse(
+        path=backup_path,
+        filename=backup_filename,
+        media_type='application/json'
+    )
+
+
+@router.get("/backup/erpnext/status")
+async def backup_erpnext_status():
+    """Check what data is available for backup."""
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    erp_config = config.get_erpnext_config()
+    url = erp_config.get('url', '')
+    api_key = erp_config.get('api_key', '')
+    api_secret = erp_config.get('api_secret', '')
+
+    doctypes = ["Customer", "Gym Member", "Sales Invoice", "Payment Entry", "Membership"]
+    counts = {}
+
+    for doctype in doctypes:
+        try:
+            headers = {
+                'Authorization': f'token {api_key}:{api_secret}',
+                'Content-Type': 'application/json'
+            }
+            response = requests.get(
+                f"{url}/api/resource/{doctype}",
+                headers=headers,
+                params={'limit_page_length': 1},
+                timeout=10
+            )
+            if response.status_code == 200:
+                # Get total count
+                count_response = requests.get(
+                    f"{url}/api/resource/{doctype}",
+                    headers=headers,
+                    params={'limit_page_length': 0, 'fields': '["name"]'},
+                    timeout=30
+                )
+                if count_response.status_code == 200:
+                    counts[doctype] = len(count_response.json().get('data', []))
+                else:
+                    counts[doctype] = 0
+            else:
+                counts[doctype] = -1  # Not accessible
+        except Exception:
+            counts[doctype] = -1
+
+    return JSONResponse({"success": True, "counts": counts})
