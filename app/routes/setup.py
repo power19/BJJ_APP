@@ -19,12 +19,12 @@ class SetupRequest(BaseModel):
 
 
 @router.get("")
-async def setup_page(request: Request):
+async def setup_page(request: Request, edit: bool = False):
     """Display the setup page."""
     config = get_config()
 
-    # If already configured, redirect to home (unless connection is failing)
-    if config.is_configured():
+    # If already configured and not in edit mode, redirect to home (unless connection is failing)
+    if config.is_configured() and not edit:
         # Test if current config still works
         erp_config = config.get_erpnext_config()
         if _test_erp_connection(erp_config['url'], erp_config['api_key'], erp_config['api_secret']):
