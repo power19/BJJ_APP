@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup
+from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup, settings
 from app.utils.config import get_config
 
 app = FastAPI(title="Invictus BJJ")
@@ -23,6 +23,7 @@ class SetupMiddleware(BaseHTTPMiddleware):
     # Paths that should be accessible without configuration
     ALLOWED_PATHS = [
         '/setup',
+        '/settings',
         '/static',
     ]
 
@@ -46,6 +47,7 @@ app.add_middleware(SetupMiddleware)
 
 # Include setup router first (before other routers)
 app.include_router(setup.router, prefix="/setup", tags=["setup"])
+app.include_router(settings.router, prefix="/settings", tags=["settings"])
 
 # Include other routers
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
