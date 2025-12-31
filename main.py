@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup, settings
+from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup, settings, promotion
 from app.utils.config import get_config
 
 app = FastAPI(title="Invictus BJJ")
@@ -59,6 +59,7 @@ app.include_router(payment.router, prefix="/api/v1/payment", tags=["payment"])
 app.include_router(overview.router)
 app.include_router(enrollment.router, prefix="/api/v1/enrollment", tags=["enrollment"])
 app.include_router(handover.router, prefix="/api/v1/payment/handover", tags=["handover"])
+app.include_router(promotion.router, prefix="/api/v1/promotion", tags=["promotion"])
 
 
 @app.get("/")
