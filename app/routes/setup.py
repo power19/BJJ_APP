@@ -16,6 +16,8 @@ class SetupRequest(BaseModel):
     erpnext_url: str
     erpnext_api_key: str
     erpnext_api_secret: str
+    company: Optional[str] = None
+    currency: Optional[str] = "SRD"
 
 
 @router.get("")
@@ -54,6 +56,47 @@ async def test_connection(setup_request: SetupRequest):
         return {"success": False, "error": "Could not connect to ERPNext. Please check your credentials."}
 
 
+@router.post("/companies")
+async def get_companies(setup_request: SetupRequest):
+    """Get available companies from ERPNext."""
+    url = setup_request.erpnext_url.rstrip('/')
+    api_key = setup_request.erpnext_api_key
+    api_secret = setup_request.erpnext_api_secret
+
+    try:
+        headers = {
+            'Authorization': f'token {api_key}:{api_secret}',
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.get(
+            f"{url}/api/resource/Company",
+            headers=headers,
+            params={"fields": '["name", "company_name", "default_currency"]', "limit_page_length": 100},
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            companies = data.get("data", [])
+            return {
+                "success": True,
+                "companies": [
+                    {
+                        "name": c.get("name"),
+                        "company_name": c.get("company_name", c.get("name")),
+                        "currency": c.get("default_currency", "SRD")
+                    }
+                    for c in companies
+                ]
+            }
+        else:
+            return {"success": False, "error": "Could not fetch companies", "companies": []}
+
+    except Exception as e:
+        return {"success": False, "error": str(e), "companies": []}
+
+
 @router.post("/save")
 async def save_config(setup_request: SetupRequest):
     """Save the configuration after successful connection test."""
@@ -66,11 +109,21 @@ async def save_config(setup_request: SetupRequest):
         return {"success": False, "error": "Connection test failed. Please verify your credentials."}
 
     config = get_config()
-    success = config.save_config({
+    config_data = {
         'erpnext_url': url,
         'erpnext_api_key': api_key,
         'erpnext_api_secret': api_secret
-    })
+    }
+
+    # Add company if provided
+    if setup_request.company:
+        config_data['company'] = setup_request.company
+
+    # Add currency if provided
+    if setup_request.currency:
+        config_data['currency'] = setup_request.currency
+
+    success = config.save_config(config_data)
 
     if success:
         # Reload the config to ensure it's available

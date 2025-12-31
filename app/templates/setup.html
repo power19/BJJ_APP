@@ -569,6 +569,17 @@
                             </button>
                         </div>
                     </div>
+
+                    <!-- Company Selection (shown after successful connection) -->
+                    <div class="field" id="companyField" style="display: none;">
+                        <label class="label" for="company">Company</label>
+                        <div class="input-wrapper">
+                            <select id="company" name="company" class="input">
+                                <option value="">Loading companies...</option>
+                            </select>
+                        </div>
+                        <p class="hint">Select the company for this gym (for multi-company ERPNext)</p>
+                    </div>
                 </div>
 
                 <div class="actions">
@@ -607,6 +618,8 @@
         const urlInput = document.getElementById('url');
         const keyInput = document.getElementById('key');
         const secretInput = document.getElementById('secret');
+        const companyField = document.getElementById('companyField');
+        const companySelect = document.getElementById('company');
         const testBtn = document.getElementById('testBtn');
         const saveBtn = document.getElementById('saveBtn');
         const togglePassword = document.getElementById('togglePassword');
@@ -614,6 +627,7 @@
         const statusIcon = document.getElementById('statusIcon');
         const statusText = document.getElementById('statusText');
         const inputs = [urlInput, keyInput, secretInput];
+        let selectedCurrency = 'SRD';
 
         // Toggle password visibility
         togglePassword.addEventListener('click', () => {
@@ -657,6 +671,51 @@
             });
         }
 
+        // Fetch companies from ERPNext
+        async function fetchCompanies() {
+            try {
+                const response = await fetch('/setup/companies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        erpnext_url: urlInput.value.trim(),
+                        erpnext_api_key: keyInput.value.trim(),
+                        erpnext_api_secret: secretInput.value.trim()
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.companies.length > 0) {
+                    companySelect.innerHTML = '';
+                    result.companies.forEach((company, index) => {
+                        const option = document.createElement('option');
+                        option.value = company.name;
+                        option.textContent = company.company_name;
+                        option.dataset.currency = company.currency;
+                        if (index === 0) {
+                            option.selected = true;
+                            selectedCurrency = company.currency || 'SRD';
+                        }
+                        companySelect.appendChild(option);
+                    });
+                    companyField.style.display = 'block';
+
+                    // Update currency when company changes
+                    companySelect.addEventListener('change', (e) => {
+                        const selected = e.target.options[e.target.selectedIndex];
+                        selectedCurrency = selected.dataset.currency || 'SRD';
+                    });
+                } else {
+                    // No companies or error - hide field
+                    companyField.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Could not fetch companies:', error);
+                companyField.style.display = 'none';
+            }
+        }
+
         // Test connection
         async function testConnection() {
             const url = urlInput.value.trim();
@@ -687,10 +746,12 @@
 
                 if (result.success) {
                     showStatus('success', 'Connected as ' + result.user);
-                    saveBtn.disabled = false;
                     connectionTested = true;
                     updateProgress(2);
                     setInputState('success');
+                    // Fetch companies
+                    await fetchCompanies();
+                    saveBtn.disabled = false;
                 } else {
                     showStatus('error', result.error || 'Connection failed');
                     saveBtn.disabled = true;
@@ -726,7 +787,9 @@
                     body: JSON.stringify({
                         erpnext_url: urlInput.value.trim(),
                         erpnext_api_key: keyInput.value.trim(),
-                        erpnext_api_secret: secretInput.value.trim()
+                        erpnext_api_secret: secretInput.value.trim(),
+                        company: companySelect.value || null,
+                        currency: selectedCurrency
                     })
                 });
 
@@ -755,6 +818,7 @@
                     setInputState(null);
                     hideStatus();
                     updateProgress(0);
+                    companyField.style.display = 'none';
                 }
             });
         });

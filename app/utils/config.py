@@ -62,6 +62,14 @@ class AppConfig:
             'api_secret': self._config.get('erpnext_api_secret', '')
         }
 
+    def get_company(self) -> str:
+        """Get the configured company for this gym."""
+        return self._config.get('company', '')
+
+    def get_currency(self) -> str:
+        """Get the configured currency (default SRD for Suriname)."""
+        return self._config.get('currency', 'SRD')
+
     def reload(self) -> None:
         """Reload configuration from file."""
         self._load_config()

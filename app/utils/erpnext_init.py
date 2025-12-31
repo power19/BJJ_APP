@@ -40,6 +40,7 @@ GYM_DOCTYPES = {
         "autoname": "field:staff_name",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "staff_name", "fieldtype": "Data", "label": "Full Name", "reqd": 1},
             {"fieldname": "role", "fieldtype": "Select", "label": "Role", "options": "Coach\nHead Coach\nTreasurer\nAdmin\nReceptionist", "reqd": 1},
             {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag", "unique": 1},
@@ -122,6 +123,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "GYM-.YYYY.-", "reqd": 1},
             {"fieldname": "member_type", "fieldtype": "Select", "label": "Member Type",
              "options": "Adult\nTeenager\nChild", "reqd": 1, "default": "Adult"},
@@ -218,6 +220,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "fetch_from": "member.company"},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "ATT-.YYYY.-.#####", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
             {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
@@ -277,6 +280,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 1,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "fetch_from": "member.company"},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "PAY-.YYYY.-", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
             {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
@@ -314,6 +318,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 1,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "HND-.YYYY.-", "reqd": 1},
             {"fieldname": "handover_date", "fieldtype": "Date", "label": "Handover Date", "reqd": 1},
             {"fieldname": "from_staff", "fieldtype": "Link", "label": "From Staff", "options": "Gym Staff", "reqd": 1},
