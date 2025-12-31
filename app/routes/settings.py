@@ -356,7 +356,7 @@ async def run_initialization():
 
 @router.post("/init/create-defaults")
 async def create_default_data():
-    """Create default membership types and class types."""
+    """Create default membership types, class types, and belt ranks."""
     initializer = get_initializer()
     config = get_config()
 
@@ -366,18 +366,36 @@ async def create_default_data():
     try:
         results = initializer.create_default_data()
 
-        # Format results
-        formatted_results = {
-            name: {"success": success, "message": message}
-            for name, (success, message) in results.items()
-        }
-
-        all_success = all(success for success, _ in results.values())
+        # Results are already formatted as dict with success/message
+        all_success = all(r.get("success", False) for r in results.values() if isinstance(r, dict))
 
         return JSONResponse({
             "success": all_success,
             "message": "Default data created" if all_success else "Some items failed",
-            "results": formatted_results
+            "results": results
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@router.post("/init/create-belt-ranks")
+async def create_belt_ranks():
+    """Create all BJJ belt ranks (adult + kids)."""
+    initializer = get_initializer()
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    try:
+        results = initializer.create_belt_ranks_only()
+
+        all_success = all(r.get("success", False) for r in results.values() if isinstance(r, dict))
+
+        return JSONResponse({
+            "success": all_success,
+            "message": f"Created {len(results)} belt ranks" if all_success else "Some ranks failed",
+            "results": results
         })
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
