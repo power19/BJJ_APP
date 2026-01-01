@@ -36,6 +36,24 @@ class AutoBillingService:
         }
 
         self._company = config.get_company()
+
+        # If company not configured, try to fetch from ERPNext
+        if not self._company:
+            try:
+                resp = requests.get(
+                    f"{self._url}/api/resource/Company",
+                    headers=self._headers,
+                    params={"fields": '["name"]', "limit_page_length": 1},
+                    timeout=10
+                )
+                if resp.status_code == 200:
+                    companies = resp.json().get("data", [])
+                    if companies:
+                        self._company = companies[0].get("name")
+                        print(f"[Auto-Billing] Using company: {self._company}")
+            except Exception as e:
+                print(f"[Auto-Billing] Could not fetch company: {e}")
+
         return True
 
     def get_members_due_for_billing(self) -> List[Dict]:

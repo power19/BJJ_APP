@@ -71,7 +71,23 @@ async def test_invoice_creation():
     }
     company = config.get_company()
 
-    results = {"steps": []}
+    # If company not configured, fetch from ERPNext
+    if not company:
+        try:
+            resp = requests.get(
+                f"{url}/api/resource/Company",
+                headers=headers,
+                params={"fields": '["name"]', "limit_page_length": 1},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                companies = resp.json().get("data", [])
+                if companies:
+                    company = companies[0].get("name")
+        except:
+            pass
+
+    results = {"steps": [], "company": company}
 
     # Step 1: Check if Item Group "Services" exists
     try:
