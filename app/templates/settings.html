@@ -181,8 +181,15 @@
                     </svg>
                     <span id="defaultsBtnText">Create All Default Data</span>
                 </button>
+                <button type="button" class="btn btn-secondary btn-block" id="updateDoctypesBtn" style="margin-top: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0112.548-3.364l1.903 1.903h-3.183a.75.75 0 100 1.5h4.992a.75.75 0 00.75-.75V4.356a.75.75 0 00-1.5 0v3.18l-1.9-1.9A9 9 0 003.306 9.67a.75.75 0 101.45.388zm15.408 3.352a.75.75 0 00-.919.53 7.5 7.5 0 01-12.548 3.364l-1.902-1.903h3.183a.75.75 0 000-1.5H2.984a.75.75 0 00-.75.75v4.992a.75.75 0 001.5 0v-3.18l1.9 1.9a9 9 0 0015.059-4.035.75.75 0 00-.53-.918z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="updateDoctypesBtnText">Update Doctypes</span>
+                </button>
             </div>
             <p class="hint" style="margin-top: 0.75rem;">Creates: Belt Ranks (Adult + Kids), Membership Types, Class Types</p>
+            <p class="hint">Update Doctypes: Adds missing fields (e.g., guardian info) to existing doctypes</p>
         </div>
     </section>
     {% endif %}
@@ -801,9 +808,11 @@
     const runInitBtn = document.getElementById('runInitBtn');
     const createBeltRanksBtn = document.getElementById('createBeltRanksBtn');
     const createDefaultsBtn = document.getElementById('createDefaultsBtn');
+    const updateDoctypesBtn = document.getElementById('updateDoctypesBtn');
     const initBtnText = document.getElementById('initBtnText');
     const beltRanksBtnText = document.getElementById('beltRanksBtnText');
     const defaultsBtnText = document.getElementById('defaultsBtnText');
+    const updateDoctypesBtnText = document.getElementById('updateDoctypesBtnText');
 
     if (initStatus) {
         // Load initialization status
@@ -957,6 +966,30 @@
 
                 createDefaultsBtn.disabled = false;
                 defaultsBtnText.textContent = 'Create All Default Data';
+            });
+        }
+
+        // Update doctypes with missing fields
+        if (updateDoctypesBtn) {
+            updateDoctypesBtn.addEventListener('click', async () => {
+                updateDoctypesBtn.disabled = true;
+                updateDoctypesBtnText.textContent = 'Updating...';
+
+                try {
+                    const response = await fetch('/settings/init/update-doctypes', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast('success', result.message || 'Doctypes updated successfully');
+                    } else {
+                        showToast('error', result.error || 'Failed to update doctypes');
+                    }
+                } catch (error) {
+                    showToast('error', 'Failed to update doctypes');
+                }
+
+                updateDoctypesBtn.disabled = false;
+                updateDoctypesBtnText.textContent = 'Update Doctypes';
             });
         }
     }

@@ -399,3 +399,33 @@ async def create_belt_ranks():
         })
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
+
+
+@router.post("/init/update-doctypes")
+async def update_doctypes():
+    """Update existing doctypes with any missing fields."""
+    initializer = get_initializer()
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    try:
+        results = initializer.update_all_doctypes()
+
+        updated = [k for k, v in results.items() if v.get("success") and "Added" in v.get("message", "")]
+        up_to_date = [k for k, v in results.items() if v.get("success") and "up to date" in v.get("message", "")]
+
+        message = ""
+        if updated:
+            message = f"Updated: {', '.join(updated)}"
+        if up_to_date:
+            message += f" Already up to date: {', '.join(up_to_date)}" if message else f"All doctypes up to date"
+
+        return JSONResponse({
+            "success": True,
+            "message": message or "No doctypes to update",
+            "results": results
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})

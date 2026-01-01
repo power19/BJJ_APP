@@ -573,6 +573,76 @@ class ERPNextInitializer:
         except Exception as e:
             return False, f"Error creating {doctype_name}: {str(e)}"
 
+    def update_doctype_fields(self, doctype_name: str) -> Tuple[bool, str]:
+        """Update an existing doctype with any missing fields from our definition."""
+        if not self._setup_connection():
+            return False, "ERPNext not configured"
+
+        if doctype_name not in GYM_DOCTYPES:
+            return False, f"Unknown doctype: {doctype_name}"
+
+        if not self.check_doctype_exists(doctype_name):
+            return False, f"{doctype_name} does not exist"
+
+        try:
+            # Get current doctype definition
+            response = requests.get(
+                f"{self._url}/api/resource/DocType/{doctype_name}",
+                headers=self._headers,
+                timeout=10
+            )
+
+            if response.status_code != 200:
+                return False, f"Failed to get {doctype_name}"
+
+            current_doc = response.json().get("data", {})
+            current_fields = {f.get("fieldname"): f for f in current_doc.get("fields", [])}
+
+            # Get our field definitions
+            our_fields = GYM_DOCTYPES[doctype_name].get("fields", [])
+
+            # Find missing fields
+            missing_fields = []
+            for field in our_fields:
+                fieldname = field.get("fieldname")
+                if fieldname and fieldname not in current_fields:
+                    missing_fields.append(field)
+
+            if not missing_fields:
+                return True, f"{doctype_name} is up to date"
+
+            # Add missing fields to current doc
+            updated_fields = current_doc.get("fields", []) + missing_fields
+
+            # Update the doctype
+            update_response = requests.put(
+                f"{self._url}/api/resource/DocType/{doctype_name}",
+                headers=self._headers,
+                json={"fields": updated_fields},
+                timeout=30
+            )
+
+            if update_response.status_code == 200:
+                field_names = [f.get("fieldname") for f in missing_fields]
+                return True, f"Added fields to {doctype_name}: {', '.join(field_names)}"
+            else:
+                error_msg = update_response.json().get('exc', update_response.text)
+                return False, f"Failed to update {doctype_name}: {error_msg[:200]}"
+
+        except Exception as e:
+            return False, f"Error updating {doctype_name}: {str(e)}"
+
+    def update_all_doctypes(self) -> Dict[str, Dict]:
+        """Update all doctypes with any missing fields."""
+        results = {}
+
+        for doctype_name in GYM_DOCTYPES.keys():
+            if self.check_doctype_exists(doctype_name):
+                success, message = self.update_doctype_fields(doctype_name)
+                results[doctype_name] = {"success": success, "message": message}
+
+        return results
+
     def initialize_all(self) -> Dict[str, Tuple[bool, str]]:
         """Initialize all required doctypes."""
         results = {}
