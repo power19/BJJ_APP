@@ -49,7 +49,14 @@ app.add_middleware(SetupMiddleware)
 app.include_router(setup.router, prefix="/setup", tags=["setup"])
 app.include_router(settings.router, prefix="/settings", tags=["settings"])
 
-# Include other routers
+# Clean URL routes for pages
+app.include_router(members.router, prefix="/members", tags=["members"])
+app.include_router(attendance.router, prefix="/checkin", tags=["checkin"])
+app.include_router(payment.router, prefix="/payment", tags=["payment-pages"])
+app.include_router(handover.router, prefix="/handover", tags=["handover-pages"])
+app.include_router(promotion.router, prefix="/promotion", tags=["promotion-pages"])
+
+# API routes (keep for backwards compatibility and API calls)
 app.include_router(files.router, prefix="/api/v1/files", tags=["files"])
 app.include_router(customers.router, prefix="/api")
 app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
@@ -60,7 +67,6 @@ app.include_router(overview.router)
 app.include_router(enrollment.router, prefix="/api/v1/enrollment", tags=["enrollment"])
 app.include_router(handover.router, prefix="/api/v1/payment/handover", tags=["handover"])
 app.include_router(promotion.router, prefix="/api/v1/promotion", tags=["promotion"])
-app.include_router(members.router, prefix="/members", tags=["members"])
 
 
 @app.get("/")
