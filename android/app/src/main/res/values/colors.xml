@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Colors -->
+    <color name="primary">#1a1a2e</color>
+    <color name="primary_dark">#16162a</color>
+    <color name="accent">#e94560</color>
+
+    <!-- UI Colors -->
+    <color name="background">#0f0f1a</color>
+    <color name="surface">#1a1a2e</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- Splash -->
+    <color name="splash_background">#1a1a2e</color>
+
+    <!-- Status bar -->
+    <color name="status_bar">#0f0f1a</color>
+</resources>

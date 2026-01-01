@@ -1,0 +1,50 @@
+# docker-compose.yml for Invictus BJJ Management System
+version: '3.8'
+
+services:
+  bjj-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: invictus-bjj
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=America/Paramaribo
+    volumes:
+      # Persist configuration
+      - ./config:/app/config
+      # Persist any local data
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Nginx reverse proxy for SSL termination
+  nginx:
+    image: nginx:alpine
+    container_name: invictus-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - bjj-app
+    profiles:
+      - production
+
+networks:
+  default:
+    name: invictus-network
