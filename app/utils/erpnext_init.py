@@ -40,6 +40,7 @@ GYM_DOCTYPES = {
         "autoname": "field:staff_name",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "staff_name", "fieldtype": "Data", "label": "Full Name", "reqd": 1},
             {"fieldname": "role", "fieldtype": "Select", "label": "Role", "options": "Coach\nHead Coach\nTreasurer\nAdmin\nReceptionist", "reqd": 1},
             {"fieldname": "rfid_tag", "fieldtype": "Data", "label": "RFID Tag", "unique": 1},
@@ -122,6 +123,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "GYM-.YYYY.-", "reqd": 1},
             {"fieldname": "member_type", "fieldtype": "Select", "label": "Member Type",
              "options": "Adult\nTeenager\nChild", "reqd": 1, "default": "Adult"},
@@ -218,6 +220,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 0,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "fetch_from": "member.company"},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "ATT-.YYYY.-.#####", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
             {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
@@ -277,6 +280,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 1,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "fetch_from": "member.company"},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "PAY-.YYYY.-", "reqd": 1},
             {"fieldname": "member", "fieldtype": "Link", "label": "Member", "options": "Gym Member", "reqd": 1},
             {"fieldname": "member_name", "fieldtype": "Data", "label": "Member Name", "fetch_from": "member.full_name", "read_only": 1},
@@ -314,6 +318,7 @@ GYM_DOCTYPES = {
         "autoname": "naming_series:",
         "is_submittable": 1,
         "fields": [
+            {"fieldname": "company", "fieldtype": "Link", "label": "Company", "options": "Company", "remember_last_selected_value": 1},
             {"fieldname": "naming_series", "fieldtype": "Select", "label": "Series", "options": "HND-.YYYY.-", "reqd": 1},
             {"fieldname": "handover_date", "fieldtype": "Date", "label": "Handover Date", "reqd": 1},
             {"fieldname": "from_staff", "fieldtype": "Link", "label": "From Staff", "options": "Gym Staff", "reqd": 1},
@@ -350,23 +355,38 @@ GYM_DOCTYPES = {
 }
 
 
-# BJJ Belt Ranks
-BJJ_BELT_RANKS = [
-    {"rank_name": "White Belt", "rank_order": 1, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4},
-    {"rank_name": "Blue Belt", "rank_order": 2, "color": "#0066CC", "days_required": 100, "stripes_available": 4},
-    {"rank_name": "Purple Belt", "rank_order": 3, "color": "#6B21A8", "days_required": 200, "stripes_available": 4},
-    {"rank_name": "Brown Belt", "rank_order": 4, "color": "#8B4513", "days_required": 300, "stripes_available": 4},
-    {"rank_name": "Black Belt", "rank_order": 5, "color": "#000000", "days_required": 400, "stripes_available": 6},
+# BJJ Adult Belt Ranks (16+ years)
+BJJ_ADULT_RANKS = [
+    {"rank_name": "White Belt", "rank_order": 10, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4, "is_active": 1, "description": "Beginner - All adults start here"},
+    {"rank_name": "Blue Belt", "rank_order": 20, "color": "#0066CC", "days_required": 100, "stripes_available": 4, "is_active": 1, "description": "Intermediate - Minimum 2 years training"},
+    {"rank_name": "Purple Belt", "rank_order": 30, "color": "#6B21A8", "days_required": 200, "stripes_available": 4, "is_active": 1, "description": "Advanced - Minimum 1.5 years at blue"},
+    {"rank_name": "Brown Belt", "rank_order": 40, "color": "#8B4513", "days_required": 300, "stripes_available": 4, "is_active": 1, "description": "Expert - Minimum 1.5 years at purple"},
+    {"rank_name": "Black Belt", "rank_order": 50, "color": "#000000", "days_required": 400, "stripes_available": 6, "is_active": 1, "description": "Master - Minimum 1 year at brown"},
+    {"rank_name": "Red/Black Belt (Coral)", "rank_order": 60, "color": "#FF0000", "days_required": 0, "stripes_available": 0, "is_active": 1, "description": "7th degree - 31+ years as black belt"},
+    {"rank_name": "Red/White Belt (Coral)", "rank_order": 70, "color": "#FF6B6B", "days_required": 0, "stripes_available": 0, "is_active": 1, "description": "8th degree - 38+ years as black belt"},
+    {"rank_name": "Red Belt", "rank_order": 80, "color": "#CC0000", "days_required": 0, "stripes_available": 0, "is_active": 1, "description": "9th/10th degree - Grandmaster"},
 ]
 
-# Kids Belt Ranks (optional)
-KIDS_BELT_RANKS = [
-    {"rank_name": "White Belt (Kids)", "rank_order": 1, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4},
-    {"rank_name": "Grey Belt", "rank_order": 2, "color": "#808080", "days_required": 50, "stripes_available": 4},
-    {"rank_name": "Yellow Belt", "rank_order": 3, "color": "#FFD700", "days_required": 75, "stripes_available": 4},
-    {"rank_name": "Orange Belt", "rank_order": 4, "color": "#FF8C00", "days_required": 100, "stripes_available": 4},
-    {"rank_name": "Green Belt", "rank_order": 5, "color": "#228B22", "days_required": 125, "stripes_available": 4},
+# BJJ Kids Belt Ranks (4-15 years) - IBJJF System
+BJJ_KIDS_RANKS = [
+    {"rank_name": "White Belt (Kids)", "rank_order": 100, "color": "#FFFFFF", "days_required": 0, "stripes_available": 4, "is_active": 1, "description": "Kids beginner belt"},
+    {"rank_name": "Grey/White Belt", "rank_order": 110, "color": "#C0C0C0", "days_required": 40, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Grey Belt", "rank_order": 120, "color": "#808080", "days_required": 50, "stripes_available": 4, "is_active": 1, "description": "Kids grey belt"},
+    {"rank_name": "Grey/Black Belt", "rank_order": 130, "color": "#606060", "days_required": 60, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Yellow/White Belt", "rank_order": 140, "color": "#FFFF99", "days_required": 70, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Yellow Belt", "rank_order": 150, "color": "#FFD700", "days_required": 80, "stripes_available": 4, "is_active": 1, "description": "Kids yellow belt"},
+    {"rank_name": "Yellow/Black Belt", "rank_order": 160, "color": "#DAA520", "days_required": 90, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Orange/White Belt", "rank_order": 170, "color": "#FFCC80", "days_required": 100, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Orange Belt", "rank_order": 180, "color": "#FF8C00", "days_required": 110, "stripes_available": 4, "is_active": 1, "description": "Kids orange belt"},
+    {"rank_name": "Orange/Black Belt", "rank_order": 190, "color": "#FF6600", "days_required": 120, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Green/White Belt", "rank_order": 200, "color": "#90EE90", "days_required": 130, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt"},
+    {"rank_name": "Green Belt", "rank_order": 210, "color": "#228B22", "days_required": 140, "stripes_available": 4, "is_active": 1, "description": "Kids green belt - highest kids rank"},
+    {"rank_name": "Green/Black Belt", "rank_order": 220, "color": "#006400", "days_required": 150, "stripes_available": 4, "is_active": 1, "description": "Kids progression belt - transitions to adult ranks at 16"},
 ]
+
+# Combined for backward compatibility
+BJJ_BELT_RANKS = BJJ_ADULT_RANKS
+KIDS_BELT_RANKS = BJJ_KIDS_RANKS
 
 # Default Membership Types (Suriname pricing in SRD)
 DEFAULT_MEMBERSHIP_TYPES = [
@@ -598,10 +618,15 @@ class ERPNextInitializer:
         if not self._setup_connection():
             return {"error": {"success": False, "message": "ERPNext not configured"}}
 
-        # Create Belt Ranks
-        for rank in BJJ_BELT_RANKS:
+        # Create Adult Belt Ranks
+        for rank in BJJ_ADULT_RANKS:
             success, message = self._create_record("Belt Rank", rank)
-            results[f"Rank: {rank['rank_name']}"] = {"success": success, "message": message}
+            results[f"Adult: {rank['rank_name']}"] = {"success": success, "message": message}
+
+        # Create Kids Belt Ranks
+        for rank in BJJ_KIDS_RANKS:
+            success, message = self._create_record("Belt Rank", rank)
+            results[f"Kids: {rank['rank_name']}"] = {"success": success, "message": message}
 
         # Create Membership Types
         for membership in DEFAULT_MEMBERSHIP_TYPES:
@@ -612,6 +637,25 @@ class ERPNextInitializer:
         for class_type in DEFAULT_CLASS_TYPES:
             success, message = self._create_record("Gym Class Type", class_type)
             results[f"Class: {class_type['class_name']}"] = {"success": success, "message": message}
+
+        return results
+
+    def create_belt_ranks_only(self) -> Dict[str, Tuple[bool, str]]:
+        """Create only belt ranks (adult + kids)."""
+        results = {}
+
+        if not self._setup_connection():
+            return {"error": {"success": False, "message": "ERPNext not configured"}}
+
+        # Create Adult Belt Ranks
+        for rank in BJJ_ADULT_RANKS:
+            success, message = self._create_record("Belt Rank", rank)
+            results[f"Adult: {rank['rank_name']}"] = {"success": success, "message": message}
+
+        # Create Kids Belt Ranks
+        for rank in BJJ_KIDS_RANKS:
+            success, message = self._create_record("Belt Rank", rank)
+            results[f"Kids: {rank['rank_name']}"] = {"success": success, "message": message}
 
         return results
 

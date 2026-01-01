@@ -1,0 +1,1059 @@
+{% extends "base.html" %}
+
+{% block title %}Belt Promotion{% endblock %}
+{% block nav_title %}Promotion{% endblock %}
+
+{% block content %}
+<div class="promotion-container">
+    <!-- Step 1: Scan Member -->
+    <div class="promo-step" id="step1">
+        <div class="step-header">
+            <div class="step-badge purple">1</div>
+            <div class="step-info">
+                <h2>Scan Member Card</h2>
+                <p>Identify the member for promotion</p>
+            </div>
+        </div>
+
+        <div class="scan-area">
+            <div class="belt-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08zm3.094 8.016a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <p class="scan-title">Ready to Promote</p>
+            <input type="text" id="memberRfid" class="rfid-input" placeholder="Scan member RFID..." autocomplete="off" autofocus>
+        </div>
+    </div>
+
+    <!-- Step 2: Member Info & Promotion Options -->
+    <div class="promo-step hidden" id="step2">
+        <div class="step-header">
+            <div class="step-badge purple">2</div>
+            <div class="step-info">
+                <h2>Review & Select Rank</h2>
+                <p>Verify eligibility and choose new rank</p>
+            </div>
+        </div>
+
+        <!-- Member Card -->
+        <div class="member-display">
+            <div class="member-photo-large" id="memberPhoto">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h3 id="memberName">Member Name</h3>
+            <p class="member-type" id="memberType">Adult</p>
+        </div>
+
+        <!-- Current Rank Display -->
+        <div class="rank-section">
+            <h4>Current Rank</h4>
+            <div class="current-rank-card" id="currentRankCard">
+                <div class="belt-display">
+                    <div class="belt-bar" id="currentBelt"></div>
+                    <div class="stripes-row" id="currentStripes"></div>
+                </div>
+                <div class="rank-details">
+                    <span class="rank-name" id="currentRankName">White Belt</span>
+                    <span class="rank-stats" id="rankStats">0 days</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eligibility Check -->
+        <div class="eligibility-card" id="eligibilityCard">
+            <div class="eligibility-header">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="check-icon">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+                <span>Eligibility Check</span>
+            </div>
+            <div class="eligibility-items">
+                <div class="eligibility-item" id="daysCheck">
+                    <span class="check-status"></span>
+                    <span class="check-label">Days requirement</span>
+                    <span class="check-value" id="daysValue">0/0</span>
+                </div>
+                <div class="eligibility-item" id="paymentCheck">
+                    <span class="check-status"></span>
+                    <span class="check-label">Payment current</span>
+                    <span class="check-value" id="paymentValue">Yes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Promotion Options -->
+        <div class="promo-options">
+            <h4>Promote To</h4>
+            <div class="rank-grid" id="rankGrid">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+
+        <!-- Stripe Option -->
+        <div class="stripe-option">
+            <button class="btn btn-secondary btn-block" id="addStripeBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+                </svg>
+                Add Stripe Instead
+            </button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="proceedBtn" disabled>Proceed</button>
+        </div>
+    </div>
+
+    <!-- Step 3: Coach Authorization -->
+    <div class="promo-step hidden" id="step3">
+        <div class="step-header">
+            <div class="step-badge orange">3</div>
+            <div class="step-info">
+                <h2>Coach Authorization</h2>
+                <p>Coach must scan their card to authorize promotion</p>
+            </div>
+        </div>
+
+        <div class="promo-summary">
+            <div class="summary-visual">
+                <div class="belt-transition">
+                    <div class="belt-from">
+                        <div class="mini-belt" id="fromBelt"></div>
+                        <span id="fromRankName">White</span>
+                    </div>
+                    <div class="transition-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="belt-to">
+                        <div class="mini-belt" id="toBelt"></div>
+                        <span id="toRankName">Blue</span>
+                    </div>
+                </div>
+                <p class="summary-member" id="summaryMember">Member Name</p>
+            </div>
+        </div>
+
+        <div class="scan-area coach">
+            <div class="coach-icon pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <p class="scan-instruction">Coach: Scan your RFID to authorize</p>
+            <input type="text" id="coachRfid" class="rfid-input" placeholder="Waiting for coach..." autocomplete="off">
+        </div>
+
+        <button class="btn btn-secondary btn-block" id="backToStep2">Back</button>
+    </div>
+
+    <!-- Step 4: Processing -->
+    <div class="promo-step hidden" id="step4">
+        <div class="processing-state">
+            <div class="spinner-large"></div>
+            <h2>Processing Promotion...</h2>
+        </div>
+    </div>
+
+    <!-- Step 5: Success -->
+    <div class="promo-step hidden" id="step5">
+        <div class="success-state">
+            <div class="success-icon celebration">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.166 2.621v.858c-1.035.148-2.059.33-3.071.543a.75.75 0 00-.584.859 6.753 6.753 0 006.138 5.6 6.73 6.73 0 002.743 1.346A6.707 6.707 0 019.279 15H8.54c-1.036 0-1.875.84-1.875 1.875V19.5h-.75a2.25 2.25 0 00-2.25 2.25c0 .414.336.75.75.75h15a.75.75 0 00.75-.75 2.25 2.25 0 00-2.25-2.25h-.75v-2.625c0-1.036-.84-1.875-1.875-1.875h-.739a6.706 6.706 0 01-1.112-3.173 6.73 6.73 0 002.743-1.347 6.753 6.753 0 006.139-5.6.75.75 0 00-.585-.858 47.077 47.077 0 00-3.07-.543V2.62a.75.75 0 00-.658-.744 49.22 49.22 0 00-6.093-.377c-2.063 0-4.096.128-6.093.377a.75.75 0 00-.657.744zm0 2.629c0 1.196.312 2.32.857 3.294A5.266 5.266 0 013.16 5.337a45.6 45.6 0 012.006-.343v.256zm13.5 0v-.256c.674.1 1.343.214 2.006.343a5.265 5.265 0 01-2.863 3.207 6.72 6.72 0 00.857-3.294z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h2>Congratulations!</h2>
+            <p class="success-member" id="successMember">Member Name</p>
+            <div class="new-rank-display">
+                <div class="belt-bar large" id="successBelt"></div>
+                <span class="new-rank-name" id="successRank">Blue Belt</span>
+            </div>
+            <p class="success-stats" id="successStats">After 120 days at White Belt</p>
+            <button class="btn btn-primary btn-block" id="newPromoBtn">New Promotion</button>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="promo-step hidden" id="errorState">
+        <div class="error-state">
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <h2 id="errorTitle">Error</h2>
+            <p id="errorMessage">Something went wrong</p>
+            <button class="btn btn-primary btn-block" id="retryBtn">Try Again</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .promotion-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    .promo-step {
+        animation: fadeIn 0.3s ease;
+    }
+
+    .promo-step.hidden {
+        display: none;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Step Header */
+    .step-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .step-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .step-badge.purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+
+    .step-badge.orange {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .step-info h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .step-info p {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    /* Scan Area */
+    .scan-area {
+        text-align: center;
+        padding: 2rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 16px;
+    }
+
+    .scan-area.coach {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .belt-icon, .coach-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: rgba(139, 92, 246, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .belt-icon svg, .coach-icon svg {
+        width: 40px;
+        height: 40px;
+        color: #8b5cf6;
+    }
+
+    .coach-icon {
+        background: rgba(245, 158, 11, 0.15);
+    }
+
+    .coach-icon svg {
+        color: #f59e0b;
+    }
+
+    .coach-icon.pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .scan-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+        margin-bottom: 1rem;
+    }
+
+    .scan-instruction {
+        color: #f59e0b;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .rfid-input {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.125rem;
+        text-align: center;
+        background: rgba(15, 23, 42, 0.5);
+        border: 2px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        color: #f8fafc;
+        outline: none;
+    }
+
+    .rfid-input:focus {
+        border-color: #8b5cf6;
+    }
+
+    /* Member Display */
+    .member-display {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .member-photo-large {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        overflow: hidden;
+        background: rgba(51, 65, 85, 0.5);
+        border: 4px solid #8b5cf6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .member-photo-large img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .member-photo-large svg {
+        width: 48px;
+        height: 48px;
+        color: #64748b;
+    }
+
+    .member-display h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .member-type {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    /* Rank Section */
+    .rank-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .rank-section h4, .promo-options h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .current-rank-card {
+        padding: 1.25rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+    }
+
+    .belt-display {
+        margin-bottom: 1rem;
+    }
+
+    .belt-bar {
+        height: 24px;
+        border-radius: 4px;
+        background: #FFFFFF;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        margin-bottom: 0.5rem;
+    }
+
+    .belt-bar.large {
+        height: 32px;
+    }
+
+    .stripes-row {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    .stripe {
+        width: 8px;
+        height: 20px;
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+    }
+
+    .stripe.earned {
+        background: #000000;
+        border-color: #000000;
+    }
+
+    .rank-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .rank-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+
+    .rank-stats {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    /* Eligibility Card */
+    .eligibility-card {
+        padding: 1rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .eligibility-card.eligible {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .eligibility-card.not-eligible {
+        border-color: rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .eligibility-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+
+    .eligibility-header .check-icon {
+        width: 20px;
+        height: 20px;
+        color: #64748b;
+    }
+
+    .eligibility-card.eligible .eligibility-header .check-icon {
+        color: #34d399;
+    }
+
+    .eligibility-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .eligibility-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .check-status {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #64748b;
+    }
+
+    .eligibility-item.pass .check-status {
+        background: #34d399;
+    }
+
+    .eligibility-item.fail .check-status {
+        background: #f87171;
+    }
+
+    .check-label {
+        flex: 1;
+        color: #94a3b8;
+    }
+
+    .check-value {
+        font-weight: 500;
+        color: #e2e8f0;
+    }
+
+    /* Rank Grid */
+    .rank-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .rank-option {
+        padding: 1rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 2px solid rgba(71, 85, 105, 0.3);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .rank-option:hover {
+        background: rgba(51, 65, 85, 0.5);
+    }
+
+    .rank-option.selected {
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.15);
+    }
+
+    .rank-option.recommended {
+        position: relative;
+    }
+
+    .rank-option.recommended::before {
+        content: 'Next';
+        position: absolute;
+        top: -8px;
+        right: 8px;
+        padding: 2px 8px;
+        background: #8b5cf6;
+        color: white;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        border-radius: 4px;
+    }
+
+    .rank-option .mini-belt {
+        height: 16px;
+        border-radius: 3px;
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .rank-option-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #e2e8f0;
+    }
+
+    /* Stripe Option */
+    .stripe-option {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Promo Summary */
+    .promo-summary {
+        padding: 1.5rem;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 16px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .belt-transition {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .belt-from, .belt-to {
+        text-align: center;
+    }
+
+    .mini-belt {
+        width: 60px;
+        height: 20px;
+        border-radius: 4px;
+        margin: 0 auto 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .belt-from span, .belt-to span {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+    }
+
+    .transition-arrow {
+        color: #8b5cf6;
+    }
+
+    .transition-arrow svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .summary-member {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+    }
+
+    /* Processing & Success */
+    .processing-state, .success-state, .error-state {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .spinner-large {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 1.5rem;
+        border: 4px solid rgba(139, 92, 246, 0.2);
+        border-top-color: #8b5cf6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .success-icon.celebration {
+        animation: celebrate 0.5s ease;
+    }
+
+    @keyframes celebrate {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+
+    .success-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #fbbf24;
+    }
+
+    .success-state h2 {
+        font-size: 1.75rem;
+        color: #f8fafc;
+        margin-bottom: 0.5rem;
+    }
+
+    .success-member {
+        font-size: 1.25rem;
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+    }
+
+    .new-rank-display {
+        margin-bottom: 1rem;
+    }
+
+    .new-rank-display .belt-bar {
+        max-width: 200px;
+        margin: 0 auto 0.5rem;
+    }
+
+    .new-rank-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #f8fafc;
+    }
+
+    .success-stats {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: rgba(239, 68, 68, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #ef4444;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // State
+    let currentMember = null;
+    let currentCoach = null;
+    let selectedRank = null;
+    let allRanks = [];
+    let eligibility = null;
+
+    // Elements
+    const steps = {
+        1: document.getElementById('step1'),
+        2: document.getElementById('step2'),
+        3: document.getElementById('step3'),
+        4: document.getElementById('step4'),
+        5: document.getElementById('step5'),
+        error: document.getElementById('errorState')
+    };
+
+    const memberRfid = document.getElementById('memberRfid');
+    const coachRfid = document.getElementById('coachRfid');
+    const proceedBtn = document.getElementById('proceedBtn');
+
+    function showStep(step) {
+        Object.values(steps).forEach(s => s.classList.add('hidden'));
+        steps[step].classList.remove('hidden');
+
+        if (step === 1) memberRfid.focus();
+        else if (step === 3) coachRfid.focus();
+    }
+
+    // Member RFID
+    let memberTimeout = null;
+    memberRfid.addEventListener('input', (e) => {
+        clearTimeout(memberTimeout);
+        memberTimeout = setTimeout(() => {
+            if (e.target.value.length >= 4) lookupMember(e.target.value);
+        }, 200);
+    });
+
+    // Coach RFID
+    let coachTimeout = null;
+    coachRfid.addEventListener('input', (e) => {
+        clearTimeout(coachTimeout);
+        coachTimeout = setTimeout(() => {
+            if (e.target.value.length >= 4) verifyCoach(e.target.value);
+        }, 200);
+    });
+
+    async function lookupMember(rfid) {
+        memberRfid.value = '';
+        showStep(4);
+
+        try {
+            const response = await fetch(`/api/v1/promotion/member/${rfid}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                showError('Member Not Found', data.error || 'Card not recognized');
+                return;
+            }
+
+            currentMember = data.member;
+            eligibility = data.eligibility;
+            allRanks = data.all_ranks || [];
+
+            // Populate member info
+            document.getElementById('memberName').textContent = currentMember.full_name;
+            document.getElementById('memberType').textContent = currentMember.member_type || 'Adult';
+
+            if (currentMember.photo) {
+                document.getElementById('memberPhoto').innerHTML = `<img src="${currentMember.photo}" alt="Photo">`;
+            }
+
+            // Current rank
+            if (currentMember.current_rank) {
+                document.getElementById('currentBelt').style.background = currentMember.current_rank.color || '#FFFFFF';
+                document.getElementById('currentRankName').textContent = currentMember.current_rank.name;
+
+                // Stripes
+                const stripesContainer = document.getElementById('currentStripes');
+                const maxStripes = currentMember.current_rank.stripes_available || 4;
+                const earnedStripes = currentMember.current_stripes || 0;
+                let stripesHtml = '';
+                for (let i = 0; i < maxStripes; i++) {
+                    stripesHtml += `<div class="stripe ${i < earnedStripes ? 'earned' : ''}"></div>`;
+                }
+                stripesContainer.innerHTML = stripesHtml;
+            }
+
+            document.getElementById('rankStats').textContent = `${currentMember.days_at_current_rank || 0} days at rank`;
+
+            // Eligibility
+            const eligCard = document.getElementById('eligibilityCard');
+            const daysCheck = document.getElementById('daysCheck');
+            const paymentCheck = document.getElementById('paymentCheck');
+
+            daysCheck.className = 'eligibility-item ' + (eligibility.meets_days_requirement ? 'pass' : 'fail');
+            document.getElementById('daysValue').textContent = `${eligibility.days_completed}/${eligibility.days_required}`;
+
+            paymentCheck.className = 'eligibility-item ' + (eligibility.payment_current ? 'pass' : 'fail');
+            document.getElementById('paymentValue').textContent = eligibility.payment_current ? 'Yes' : 'No';
+
+            eligCard.className = 'eligibility-card ' + (eligibility.is_eligible ? 'eligible' : 'not-eligible');
+
+            // Populate rank options
+            populateRankOptions();
+
+            showStep(2);
+        } catch (error) {
+            showError('Connection Error', error.message);
+        }
+    }
+
+    function populateRankOptions() {
+        const container = document.getElementById('rankGrid');
+        container.innerHTML = '';
+
+        const currentOrder = currentMember.current_rank?.order || 0;
+
+        allRanks.forEach(rank => {
+            if (rank.rank_order <= currentOrder) return; // Only show higher ranks
+
+            const isNext = rank.rank_order === currentOrder + 1;
+            const div = document.createElement('div');
+            div.className = 'rank-option' + (isNext ? ' recommended' : '');
+            div.dataset.rankId = rank.name;
+            div.dataset.rankName = rank.rank_name;
+            div.dataset.rankColor = rank.color || '#FFFFFF';
+            div.innerHTML = `
+                <div class="mini-belt" style="background: ${rank.color || '#FFFFFF'}"></div>
+                <span class="rank-option-name">${rank.rank_name}</span>
+            `;
+            div.addEventListener('click', () => selectRank(div, rank));
+
+            if (isNext) {
+                selectRank(div, rank); // Auto-select next rank
+            }
+
+            container.appendChild(div);
+        });
+    }
+
+    function selectRank(element, rank) {
+        document.querySelectorAll('.rank-option').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        selectedRank = rank;
+        proceedBtn.disabled = false;
+    }
+
+    // Proceed to coach auth
+    proceedBtn.addEventListener('click', () => {
+        if (!selectedRank) return;
+
+        // Update summary
+        document.getElementById('fromBelt').style.background = currentMember.current_rank?.color || '#FFFFFF';
+        document.getElementById('fromRankName').textContent = currentMember.current_rank?.name || 'None';
+        document.getElementById('toBelt').style.background = selectedRank.color || '#FFFFFF';
+        document.getElementById('toRankName').textContent = selectedRank.rank_name;
+        document.getElementById('summaryMember').textContent = currentMember.full_name;
+
+        showStep(3);
+    });
+
+    // Add stripe
+    document.getElementById('addStripeBtn').addEventListener('click', async () => {
+        showStep(4);
+
+        try {
+            // Need coach verification for stripe too - go to step 3 with stripe mode
+            // For simplicity, we'll just add the stripe directly with a confirmation
+            if (!confirm('Add a stripe to this member\'s belt?')) {
+                showStep(2);
+                return;
+            }
+
+            // For stripes, we still need coach - simplified flow
+            const rfid = prompt('Coach: Enter your RFID to authorize stripe');
+            if (!rfid) {
+                showStep(2);
+                return;
+            }
+
+            const coachResponse = await fetch(`/api/v1/promotion/coach/${rfid}`);
+            const coachData = await coachResponse.json();
+
+            if (!coachData.success) {
+                alert(coachData.error || 'Coach not authorized');
+                showStep(2);
+                return;
+            }
+
+            const stripeResponse = await fetch('/api/v1/promotion/add-stripe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    member_id: currentMember.id,
+                    coach_id: coachData.coach.id
+                })
+            });
+
+            const stripeData = await stripeResponse.json();
+
+            if (stripeData.success) {
+                alert(`Stripe added! (${stripeData.current_stripes}/${stripeData.max_stripes})`);
+                resetPromotion();
+            } else {
+                alert(stripeData.error || 'Failed to add stripe');
+                showStep(2);
+            }
+        } catch (error) {
+            showError('Error', error.message);
+        }
+    });
+
+    // Back to step 2
+    document.getElementById('backToStep2').addEventListener('click', () => {
+        coachRfid.value = '';
+        showStep(2);
+    });
+
+    // Cancel
+    document.getElementById('cancelBtn').addEventListener('click', resetPromotion);
+
+    async function verifyCoach(rfid) {
+        coachRfid.value = '';
+
+        try {
+            const response = await fetch(`/api/v1/promotion/coach/${rfid}`);
+            const data = await response.json();
+
+            if (!data.success) {
+                alert(data.error || 'Coach not authorized');
+                coachRfid.focus();
+                return;
+            }
+
+            currentCoach = data.coach;
+            processPromotion();
+        } catch (error) {
+            alert('Error: ' + error.message);
+            coachRfid.focus();
+        }
+    }
+
+    async function processPromotion() {
+        showStep(4);
+
+        try {
+            const response = await fetch('/api/v1/promotion/promote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    member_id: currentMember.id,
+                    coach_id: currentCoach.id,
+                    new_rank_id: selectedRank.name
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                showError('Promotion Failed', data.error);
+                return;
+            }
+
+            // Show success
+            document.getElementById('successMember').textContent = data.member_name;
+            document.getElementById('successBelt').style.background = data.new_rank.color;
+            document.getElementById('successRank').textContent = data.new_rank.name;
+            document.getElementById('successStats').textContent = `After ${data.days_at_previous_rank} days at previous rank`;
+
+            showStep(5);
+        } catch (error) {
+            showError('Connection Error', error.message);
+        }
+    }
+
+    function showError(title, message) {
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorMessage').textContent = message;
+        showStep('error');
+    }
+
+    document.getElementById('retryBtn').addEventListener('click', resetPromotion);
+    document.getElementById('newPromoBtn').addEventListener('click', resetPromotion);
+
+    function resetPromotion() {
+        currentMember = null;
+        currentCoach = null;
+        selectedRank = null;
+        eligibility = null;
+        memberRfid.value = '';
+        coachRfid.value = '';
+        proceedBtn.disabled = true;
+        showStep(1);
+    }
+
+    // Initialize
+    showStep(1);
+
+    // Keep focused
+    setInterval(() => {
+        if (!steps[1].classList.contains('hidden')) memberRfid.focus();
+        else if (!steps[3].classList.contains('hidden')) coachRfid.focus();
+    }, 1000);
+</script>
+{% endblock %}
