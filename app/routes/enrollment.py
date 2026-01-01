@@ -118,6 +118,7 @@ async def member_detail_page(request: Request, member_id: str):
     member = None
     belt_ranks = {}
     attendance_history = []
+    membership_types = []
 
     if connected:
         try:
@@ -140,6 +141,20 @@ async def member_detail_page(request: Request, member_id: str):
             if resp.status_code == 200:
                 ranks = resp.json().get("data", [])
                 belt_ranks = {r["name"]: r for r in ranks}
+
+            # Fetch membership types
+            resp = requests.get(
+                f"{url}/api/resource/Membership Type",
+                headers=headers,
+                params={
+                    "filters": '[["is_active", "=", 1]]',
+                    "fields": '["name", "membership_name", "price", "membership_category", "is_recurring"]',
+                    "limit_page_length": 100
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                membership_types = resp.json().get("data", [])
 
             # Fetch recent attendance
             resp = requests.get(
@@ -166,6 +181,7 @@ async def member_detail_page(request: Request, member_id: str):
             "connected": connected,
             "member": member,
             "belt_ranks": belt_ranks,
+            "membership_types": membership_types,
             "attendance_history": attendance_history
         }
     )
@@ -417,6 +433,178 @@ async def search_parent(q: str = ""):
             })
 
         return JSONResponse({"success": False, "members": []})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+# ============================================================================
+# Member Management API Endpoints
+# ============================================================================
+
+class StatusUpdateRequest(BaseModel):
+    """Request to update member status."""
+    status: str  # Active, Suspended, Cancelled
+
+
+class MembershipUpdateRequest(BaseModel):
+    """Request to update member's subscription."""
+    membership_type: str
+    payment_status: Optional[str] = None  # Current, Overdue, None
+
+
+@router.post("/member/{member_id}/update-status")
+async def update_member_status(member_id: str, req: StatusUpdateRequest):
+    """Update a member's status (suspend, reactivate, cancel)."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    valid_statuses = ["Active", "Suspended", "Cancelled", "Expired"]
+    if req.status not in valid_statuses:
+        return JSONResponse({
+            "success": False,
+            "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+        }, status_code=400)
+
+    try:
+        # Update member status
+        resp = requests.put(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            json={"status": req.status},
+            timeout=10
+        )
+
+        if resp.status_code == 200:
+            action = {
+                "Active": "reactivated",
+                "Suspended": "suspended",
+                "Cancelled": "cancelled",
+                "Expired": "marked as expired"
+            }.get(req.status, "updated")
+
+            return JSONResponse({
+                "success": True,
+                "message": f"Member {action} successfully"
+            })
+        else:
+            error_msg = resp.json().get("exc", resp.text)
+            return JSONResponse({
+                "success": False,
+                "error": f"Failed to update status: {error_msg[:200]}"
+            }, status_code=400)
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/member/{member_id}/update-membership")
+async def update_member_membership(member_id: str, req: MembershipUpdateRequest):
+    """Update a member's current membership/subscription type."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    try:
+        update_data = {
+            "current_membership_type": req.membership_type
+        }
+
+        if req.payment_status:
+            update_data["payment_status"] = req.payment_status
+
+        resp = requests.put(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            json=update_data,
+            timeout=10
+        )
+
+        if resp.status_code == 200:
+            return JSONResponse({
+                "success": True,
+                "message": "Membership updated successfully"
+            })
+        else:
+            error_msg = resp.json().get("exc", resp.text)
+            return JSONResponse({
+                "success": False,
+                "error": f"Failed to update membership: {error_msg[:200]}"
+            }, status_code=400)
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/member/{member_id}/update-payment-status")
+async def update_payment_status(member_id: str, payment_status: str):
+    """Update a member's payment status."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    valid_statuses = ["Current", "Overdue", "None"]
+    if payment_status not in valid_statuses:
+        return JSONResponse({
+            "success": False,
+            "error": f"Invalid payment status. Must be one of: {', '.join(valid_statuses)}"
+        }, status_code=400)
+
+    try:
+        resp = requests.put(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            json={"payment_status": payment_status},
+            timeout=10
+        )
+
+        if resp.status_code == 200:
+            return JSONResponse({
+                "success": True,
+                "message": "Payment status updated"
+            })
+        else:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to update payment status"
+            }, status_code=400)
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.get("/membership-types")
+async def get_membership_types():
+    """Get all active membership types."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    try:
+        resp = requests.get(
+            f"{url}/api/resource/Membership Type",
+            headers=headers,
+            params={
+                "filters": '[["is_active", "=", 1]]',
+                "fields": '["name", "membership_name", "price", "membership_category", "is_recurring"]',
+                "limit_page_length": 100
+            },
+            timeout=10
+        )
+
+        if resp.status_code == 200:
+            types = resp.json().get("data", [])
+            return JSONResponse({
+                "success": True,
+                "membership_types": types
+            })
+
+        return JSONResponse({"success": False, "membership_types": []})
 
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
