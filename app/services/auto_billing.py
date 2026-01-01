@@ -159,18 +159,29 @@ class AutoBillingService:
                 result = response.json()
                 invoice_name = result.get("data", {}).get("name")
 
-                # Submit the invoice so it shows up properly
-                submit_response = requests.put(
-                    f"{self._url}/api/resource/Sales Invoice/{invoice_name}",
+                # Submit the invoice using frappe.client.submit
+                submit_response = requests.post(
+                    f"{self._url}/api/method/frappe.client.submit",
                     headers=self._headers,
-                    json={"docstatus": 1},
+                    json={"doc": {"doctype": "Sales Invoice", "name": invoice_name}},
                     timeout=10
                 )
 
                 if submit_response.status_code == 200:
                     return True, f"Invoice {invoice_name} created and submitted", invoice_name
                 else:
-                    return True, f"Invoice {invoice_name} created (draft)", invoice_name
+                    # Try alternative method
+                    submit_response2 = requests.post(
+                        f"{self._url}/api/method/frappe.client.submit",
+                        headers=self._headers,
+                        json={"doctype": "Sales Invoice", "name": invoice_name},
+                        timeout=10
+                    )
+                    if submit_response2.status_code == 200:
+                        return True, f"Invoice {invoice_name} created and submitted", invoice_name
+
+                    print(f"[Auto-Billing] Submit failed: {submit_response.text[:200]}")
+                    return True, f"Invoice {invoice_name} created (draft - submit failed)", invoice_name
             else:
                 # Get full error message
                 try:
