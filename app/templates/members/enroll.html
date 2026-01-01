@@ -398,39 +398,23 @@
                     <input type="hidden" id="memberType" name="member_type" value="Adult">
 
                     <div class="parent-section" id="parentSection">
-                        <label class="label">Parent/Guardian (required for minors)</label>
+                        <label class="label" style="margin-bottom: 1rem;">Parent/Guardian Information</label>
 
-                        <!-- Option: Link to existing member -->
-                        <div class="field" style="margin-top: 0.75rem;">
-                            <label class="label" style="font-size: 0.75rem; color: #94a3b8;">If parent also trains here:</label>
-                            <div class="select-wrapper">
-                                <select id="parentMember" name="parent_member" class="select">
-                                    <option value="">-- Select existing member (optional) --</option>
-                                    {% for member in existing_members %}
-                                    <option value="{{ member.name }}">{{ member.full_name }} ({{ member.phone }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
-                        <p style="text-align: center; color: #64748b; margin: 0.75rem 0; font-size: 0.8125rem;">- OR enter guardian info below -</p>
-
-                        <!-- Guardian info (for non-member parents) -->
+                        <!-- Guardian info (for non-member parents) - shown first -->
                         <div id="guardianFields">
                             <div class="field">
-                                <label class="label">Guardian Name</label>
-                                <input type="text" id="guardianName" name="guardian_name" class="input" placeholder="Parent/guardian name">
+                                <label class="label required">Guardian Name</label>
+                                <input type="text" id="guardianName" name="guardian_name" class="input" placeholder="Parent/guardian full name">
                             </div>
                             <div class="field-row">
                                 <div class="field">
-                                    <label class="label">Guardian Phone</label>
+                                    <label class="label required">Guardian Phone</label>
                                     <input type="tel" id="guardianPhone" name="guardian_phone" class="input" placeholder="+597 ...">
                                 </div>
                                 <div class="field">
                                     <label class="label">Relationship</label>
                                     <div class="select-wrapper">
                                         <select id="guardianRelationship" name="guardian_relationship" class="select">
-                                            <option value="">Select...</option>
                                             <option value="Parent">Parent</option>
                                             <option value="Guardian">Guardian</option>
                                             <option value="Grandparent">Grandparent</option>
@@ -445,6 +429,23 @@
                                 <input type="email" id="guardianEmail" name="guardian_email" class="input" placeholder="email@example.com">
                             </div>
                         </div>
+
+                        <!-- Optional: Link to existing member if parent trains here -->
+                        {% if existing_members %}
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155;">
+                            <p style="color: #64748b; font-size: 0.8125rem; margin-bottom: 0.5rem;">Parent also trains here? Link their account (optional):</p>
+                            <div class="select-wrapper">
+                                <select id="parentMember" name="parent_member" class="select">
+                                    <option value="">-- Don't link to member --</option>
+                                    {% for member in existing_members %}
+                                    <option value="{{ member.name }}">{{ member.full_name }} ({{ member.phone }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% else %}
+                        <input type="hidden" id="parentMember" name="parent_member" value="">
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -715,13 +716,12 @@
             if (step === 1) {
                 const memberType = document.getElementById('memberType').value;
                 if (memberType === 'Child' || memberType === 'Teenager') {
-                    const parentMember = document.getElementById('parentMember').value;
                     const guardianName = document.getElementById('guardianName').value.trim();
                     const guardianPhone = document.getElementById('guardianPhone').value.trim();
 
-                    // Must have either linked parent OR guardian info
-                    if (!parentMember && (!guardianName || !guardianPhone)) {
-                        showToast('error', 'Please select a parent member OR enter guardian name and phone');
+                    // Guardian info is required for minors
+                    if (!guardianName || !guardianPhone) {
+                        showToast('error', 'Please enter guardian name and phone number');
                         return false;
                     }
                 }
