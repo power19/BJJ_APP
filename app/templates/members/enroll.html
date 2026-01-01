@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>New Member - Invictus BJJ</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            color: #f8fafc;
+            line-height: 1.5;
+        }
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                        #0f172a;
+            z-index: -1;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-bottom: 100px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        .back-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: rgba(71, 85, 105, 0.5); color: #f1f5f9; }
+        .back-btn svg { width: 24px; height: 24px; }
+        .header h1 { font-size: 1.5rem; font-weight: 700; color: #f1f5f9; }
+
+        /* Progress Steps */
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .progress-step {
+            width: 3rem;
+            height: 4px;
+            background: #334155;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+        .progress-step.active { background: #ec4899; }
+        .progress-step.completed { background: #22c55e; }
+
+        /* Form Card */
+        .form-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .step-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .step-title svg { width: 24px; height: 24px; color: #ec4899; }
+
+        /* Form Fields */
+        .field { margin-bottom: 1rem; }
+        .field-row { display: flex; gap: 1rem; }
+        .field-row .field { flex: 1; }
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 0.375rem;
+        }
+        .required::after { content: " *"; color: #f87171; }
+        .input, .select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: #f8fafc;
+            font-family: inherit;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+        .input::placeholder { color: #64748b; }
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: #ec4899;
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .input.error { border-color: #f87171; }
+        .input.success { border-color: #22c55e; }
+        .hint { font-size: 0.75rem; color: #64748b; margin-top: 0.25rem; }
+        .error-text { font-size: 0.75rem; color: #f87171; margin-top: 0.25rem; }
+
+        /* Select Styling */
+        .select-wrapper { position: relative; }
+        .select-wrapper::after {
+            content: "";
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-top-color: #64748b;
+            pointer-events: none;
+        }
+        .select { padding-right: 2.5rem; cursor: pointer; }
+
+        /* Member Type Selector */
+        .member-type-selector {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .type-option {
+            flex: 1;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .type-option:hover { border-color: #475569; }
+        .type-option.selected {
+            border-color: #ec4899;
+            background: rgba(236, 72, 153, 0.1);
+        }
+        .type-option .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+        .type-option .name { font-weight: 600; color: #f1f5f9; }
+        .type-option .age { font-size: 0.75rem; color: #64748b; }
+
+        /* RFID Input */
+        .rfid-wrapper { position: relative; }
+        .rfid-status {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+        .rfid-status.checking { color: #fbbf24; }
+        .rfid-status.available { color: #22c55e; }
+        .rfid-status.taken { color: #f87171; }
+        .rfid-status svg { width: 18px; height: 18px; }
+
+        /* Parent Selector */
+        .parent-section {
+            display: none;
+            padding: 1rem;
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .parent-section.show { display: block; }
+        .parent-section .label { color: #fbbf24; }
+
+        /* Membership Cards */
+        .membership-grid {
+            display: grid;
+            gap: 0.75rem;
+        }
+        .membership-option {
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .membership-option:hover { border-color: #475569; }
+        .membership-option.selected {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .membership-info .name { font-weight: 600; color: #f1f5f9; }
+        .membership-info .category { font-size: 0.75rem; color: #64748b; }
+        .membership-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #22c55e;
+        }
+        .membership-price span { font-size: 0.75rem; color: #64748b; }
+
+        /* Actions */
+        .actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(71, 85, 105, 0.5);
+            display: flex;
+            gap: 0.75rem;
+            z-index: 100;
+        }
+        .btn {
+            flex: 1;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn svg { width: 20px; height: 20px; }
+        .btn-secondary {
+            background: rgba(51, 65, 85, 0.5);
+            border: 2px solid #475569;
+            color: #e2e8f0;
+        }
+        .btn-secondary:hover { background: rgba(71, 85, 105, 0.5); }
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(236, 72, 153, 0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 6px 24px rgba(236, 72, 153, 0.4); }
+        .btn-primary:disabled {
+            background: #334155;
+            box-shadow: none;
+            cursor: not-allowed;
+            color: #64748b;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        /* Step visibility */
+        .step { display: none; }
+        .step.active { display: block; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 1rem 1.5rem;
+            background: #1e293b;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border: 1px solid #22c55e; }
+        .toast.error { border: 1px solid #f87171; }
+        .toast svg { width: 24px; height: 24px; }
+        .toast.success svg { color: #22c55e; }
+        .toast.error svg { color: #f87171; }
+
+        /* Success Screen */
+        .success-screen {
+            display: none;
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+        .success-screen.show { display: block; }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .success-icon svg { width: 48px; height: 48px; color: white; }
+        .success-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .success-message { color: #94a3b8; margin-bottom: 2rem; }
+        .member-id {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.125rem;
+            color: #22c55e;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 640px) {
+            .container { padding: 2rem; }
+            .member-type-selector { gap: 1rem; }
+            .type-option { padding: 1.5rem; }
+            .membership-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div id="toast" class="toast">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>
+        <span id="toastText"></span>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <a href="/members" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" /></svg>
+            </a>
+            <h1>New Member</h1>
+        </header>
+
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1"></div>
+            <div class="progress-step" data-step="2"></div>
+            <div class="progress-step" data-step="3"></div>
+            <div class="progress-step" data-step="4"></div>
+        </div>
+
+        <form id="enrollForm">
+            <!-- Step 1: Member Type -->
+            <div class="step active" id="step1">
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" /></svg>
+                        Member Type
+                    </h2>
+
+                    <div class="member-type-selector">
+                        <div class="type-option selected" data-type="Adult">
+                            <div class="icon">&#x1F9D4;</div>
+                            <div class="name">Adult</div>
+                            <div class="age">16+ years</div>
+                        </div>
+                        <div class="type-option" data-type="Teenager">
+                            <div class="icon">&#x1F9D2;</div>
+                            <div class="name">Teen</div>
+                            <div class="age">13-15 years</div>
+                        </div>
+                        <div class="type-option" data-type="Child">
+                            <div class="icon">&#x1F476;</div>
+                            <div class="name">Child</div>
+                            <div class="age">4-12 years</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="memberType" name="member_type" value="Adult">
+
+                    <div class="parent-section" id="parentSection">
+                        <label class="label">Parent/Guardian (required for minors)</label>
+
+                        <!-- Option: Link to existing member -->
+                        <div class="field" style="margin-top: 0.75rem;">
+                            <label class="label" style="font-size: 0.75rem; color: #94a3b8;">If parent also trains here:</label>
+                            <div class="select-wrapper">
+                                <select id="parentMember" name="parent_member" class="select">
+                                    <option value="">-- Select existing member (optional) --</option>
+                                    {% for member in existing_members %}
+                                    <option value="{{ member.name }}">{{ member.full_name }} ({{ member.phone }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <p style="text-align: center; color: #64748b; margin: 0.75rem 0; font-size: 0.8125rem;">- OR enter guardian info below -</p>
+
+                        <!-- Guardian info (for non-member parents) -->
+                        <div id="guardianFields">
+                            <div class="field">
+                                <label class="label">Guardian Name</label>
+                                <input type="text" id="guardianName" name="guardian_name" class="input" placeholder="Parent/guardian name">
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label class="label">Guardian Phone</label>
+                                    <input type="tel" id="guardianPhone" name="guardian_phone" class="input" placeholder="+597 ...">
+                                </div>
+                                <div class="field">
+                                    <label class="label">Relationship</label>
+                                    <div class="select-wrapper">
+                                        <select id="guardianRelationship" name="guardian_relationship" class="select">
+                                            <option value="">Select...</option>
+                                            <option value="Parent">Parent</option>
+                                            <option value="Guardian">Guardian</option>
+                                            <option value="Grandparent">Grandparent</option>
+                                            <option value="Sibling">Sibling</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Guardian Email</label>
+                                <input type="email" id="guardianEmail" name="guardian_email" class="input" placeholder="email@example.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Personal Info -->
+            <div class="step" id="step2">
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122z" /></svg>
+                        Personal Information
+                    </h2>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="label required">First Name</label>
+                            <input type="text" id="firstName" name="first_name" class="input" placeholder="Enter first name" required>
+                        </div>
+                        <div class="field">
+                            <label class="label required">Last Name</label>
+                            <input type="text" id="lastName" name="last_name" class="input" placeholder="Enter last name" required>
+                        </div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label class="label">Date of Birth</label>
+                            <input type="date" id="dateOfBirth" name="date_of_birth" class="input">
+                        </div>
+                        <div class="field">
+                            <label class="label">Gender</label>
+                            <div class="select-wrapper">
+                                <select id="gender" name="gender" class="select">
+                                    <option value="">Select...</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label required">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="input" placeholder="+597 ..." required>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <input type="email" id="email" name="email" class="input" placeholder="email@example.com">
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Address</label>
+                        <input type="text" id="address" name="address" class="input" placeholder="Street, City">
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z" clip-rule="evenodd" /></svg>
+                        Emergency Contact
+                    </h2>
+
+                    <div class="field">
+                        <label class="label">Contact Name</label>
+                        <input type="text" id="emergencyContact" name="emergency_contact" class="input" placeholder="Emergency contact name">
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Contact Phone</label>
+                        <input type="tel" id="emergencyPhone" name="emergency_phone" class="input" placeholder="+597 ...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: RFID & Membership -->
+            <div class="step" id="step3">
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 3.75a3 3 0 00-3 3v10.5a3 3 0 003 3h15a3 3 0 003-3V6.75a3 3 0 00-3-3h-15zm4.125 3a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm-3.873 8.703a4.126 4.126 0 017.746 0 .75.75 0 01-.351.92 7.47 7.47 0 01-3.522.877 7.47 7.47 0 01-3.522-.877.75.75 0 01-.351-.92zM15 8.25a.75.75 0 000 1.5h3.75a.75.75 0 000-1.5H15zM14.25 12a.75.75 0 01.75-.75h3.75a.75.75 0 010 1.5H15a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5h3.75a.75.75 0 000-1.5H15z" clip-rule="evenodd" /></svg>
+                        RFID Card
+                    </h2>
+
+                    <div class="field">
+                        <label class="label">RFID Tag Number</label>
+                        <div class="rfid-wrapper">
+                            <input type="text" id="rfidTag" name="rfid_tag" class="input" placeholder="Scan or enter RFID tag">
+                            <div class="rfid-status" id="rfidStatus"></div>
+                        </div>
+                        <p class="hint">Scan the member's RFID card or enter the number manually</p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 3.75a3 3 0 00-3 3v.75h21v-.75a3 3 0 00-3-3h-15z" /><path fill-rule="evenodd" d="M1.5 9.75v7.5a3 3 0 003 3h15a3 3 0 003-3v-7.5H1.5zM6 12a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3A.75.75 0 016 12zm.75 2.25a.75.75 0 000 1.5h6a.75.75 0 000-1.5h-6z" clip-rule="evenodd" /></svg>
+                        Membership Type
+                    </h2>
+
+                    <div class="membership-grid" id="membershipGrid">
+                        {% for mt in membership_types %}
+                        <div class="membership-option" data-membership="{{ mt.name }}">
+                            <div class="membership-info">
+                                <div class="name">{{ mt.membership_name }}</div>
+                                <div class="category">{{ mt.membership_category }}</div>
+                            </div>
+                            <div class="membership-price">
+                                {{ mt.price|int }} <span>SRD</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if not membership_types %}
+                        <p style="color: #64748b; text-align: center; padding: 1rem;">No membership types available. Create them in Settings first.</p>
+                        {% endif %}
+                    </div>
+                    <input type="hidden" id="membershipType" name="membership_type" value="">
+                </div>
+            </div>
+
+            <!-- Step 4: Review -->
+            <div class="step" id="step4">
+                <div class="form-card">
+                    <h2 class="step-title">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>
+                        Review & Confirm
+                    </h2>
+
+                    <div id="reviewContent" style="color: #94a3b8;">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Screen -->
+            <div class="success-screen" id="successScreen">
+                <div class="success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg>
+                </div>
+                <h2 class="success-title">Member Enrolled!</h2>
+                <p class="success-message">The new member has been successfully added to the system.</p>
+                <div class="member-id" id="newMemberId"></div>
+                <a href="/api/v1/enrollment" class="btn btn-primary" style="display: inline-flex; max-width: 300px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
+                    Enroll Another
+                </a>
+            </div>
+        </form>
+
+        <div class="actions" id="formActions">
+            <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd" /></svg>
+                Back
+            </button>
+            <button type="button" class="btn btn-primary" id="nextBtn">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 4;
+        let rfidCheckTimeout = null;
+
+        const form = document.getElementById('enrollForm');
+        const steps = document.querySelectorAll('.step');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Member type selection
+        document.querySelectorAll('.type-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                document.getElementById('memberType').value = option.dataset.type;
+
+                // Show/hide parent section for minors
+                const parentSection = document.getElementById('parentSection');
+                if (option.dataset.type === 'Child' || option.dataset.type === 'Teenager') {
+                    parentSection.classList.add('show');
+                } else {
+                    parentSection.classList.remove('show');
+                }
+            });
+        });
+
+        // Membership selection
+        document.querySelectorAll('.membership-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.membership-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                document.getElementById('membershipType').value = option.dataset.membership;
+            });
+        });
+
+        // RFID check
+        document.getElementById('rfidTag').addEventListener('input', (e) => {
+            const rfid = e.target.value.trim();
+            const statusEl = document.getElementById('rfidStatus');
+
+            if (rfidCheckTimeout) clearTimeout(rfidCheckTimeout);
+
+            if (rfid.length < 3) {
+                statusEl.innerHTML = '';
+                statusEl.className = 'rfid-status';
+                return;
+            }
+
+            statusEl.innerHTML = '<svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg> Checking...';
+            statusEl.className = 'rfid-status checking';
+
+            rfidCheckTimeout = setTimeout(async () => {
+                try {
+                    const resp = await fetch(`/members/api/check-rfid/${rfid}`);
+                    const result = await resp.json();
+
+                    if (result.success) {
+                        if (result.in_use) {
+                            statusEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clip-rule="evenodd" /></svg> In use';
+                            statusEl.className = 'rfid-status taken';
+                            e.target.classList.add('error');
+                            e.target.classList.remove('success');
+                        } else {
+                            statusEl.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg> Available';
+                            statusEl.className = 'rfid-status available';
+                            e.target.classList.remove('error');
+                            e.target.classList.add('success');
+                        }
+                    }
+                } catch (err) {
+                    statusEl.innerHTML = '';
+                    statusEl.className = 'rfid-status';
+                }
+            }, 500);
+        });
+
+        function updateProgress() {
+            progressSteps.forEach((step, i) => {
+                step.classList.remove('active', 'completed');
+                if (i + 1 < currentStep) step.classList.add('completed');
+                else if (i + 1 === currentStep) step.classList.add('active');
+            });
+        }
+
+        function showStep(step) {
+            steps.forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            prevBtn.style.display = step === 1 ? 'none' : 'flex';
+
+            if (step === totalSteps) {
+                nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg> Enroll Member';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+                updateReview();
+            } else {
+                nextBtn.innerHTML = 'Next <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M16.28 11.47a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 011.06-1.06l7.5 7.5z" clip-rule="evenodd" /></svg>';
+                nextBtn.classList.add('btn-primary');
+                nextBtn.classList.remove('btn-success');
+            }
+
+            updateProgress();
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                const memberType = document.getElementById('memberType').value;
+                if (memberType === 'Child' || memberType === 'Teenager') {
+                    const parentMember = document.getElementById('parentMember').value;
+                    const guardianName = document.getElementById('guardianName').value.trim();
+                    const guardianPhone = document.getElementById('guardianPhone').value.trim();
+
+                    // Must have either linked parent OR guardian info
+                    if (!parentMember && (!guardianName || !guardianPhone)) {
+                        showToast('error', 'Please select a parent member OR enter guardian name and phone');
+                        return false;
+                    }
+                }
+                return true;
+            }
+            if (step === 2) {
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+
+                if (!firstName || !lastName) {
+                    showToast('error', 'First and last name are required');
+                    return false;
+                }
+                if (!phone) {
+                    showToast('error', 'Phone number is required');
+                    return false;
+                }
+                return true;
+            }
+            if (step === 3) {
+                // RFID and membership are optional
+                return true;
+            }
+            return true;
+        }
+
+        function updateReview() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const memberType = document.getElementById('memberType').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const rfid = document.getElementById('rfidTag').value;
+            const membership = document.querySelector('.membership-option.selected');
+
+            let html = `
+                <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #334155;">
+                    <div style="font-weight: 600; color: #f1f5f9; font-size: 1.25rem;">${firstName} ${lastName}</div>
+                    <div>${memberType} Member</div>
+                </div>
+                <div style="display: grid; gap: 0.5rem;">
+                    <div><strong>Phone:</strong> ${phone}</div>
+                    ${email ? `<div><strong>Email:</strong> ${email}</div>` : ''}
+                    ${rfid ? `<div><strong>RFID:</strong> ${rfid}</div>` : '<div><strong>RFID:</strong> <em>Not assigned</em></div>'}
+                    ${membership ? `<div><strong>Membership:</strong> ${membership.querySelector('.name').textContent}</div>` : '<div><strong>Membership:</strong> <em>None selected</em></div>'}
+                </div>
+            `;
+            document.getElementById('reviewContent').innerHTML = html;
+        }
+
+        function showToast(type, message) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+            toast.className = `toast ${type} show`;
+            toastText.textContent = message;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        async function submitForm() {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border:2px solid white;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div> Enrolling...';
+
+            const formData = {
+                first_name: document.getElementById('firstName').value.trim(),
+                last_name: document.getElementById('lastName').value.trim(),
+                member_type: document.getElementById('memberType').value,
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim() || null,
+                date_of_birth: document.getElementById('dateOfBirth').value || null,
+                gender: document.getElementById('gender').value || null,
+                address: document.getElementById('address').value.trim() || null,
+                emergency_contact: document.getElementById('emergencyContact').value.trim() || null,
+                emergency_phone: document.getElementById('emergencyPhone').value.trim() || null,
+                parent_member: document.getElementById('parentMember').value || null,
+                guardian_name: document.getElementById('guardianName').value.trim() || null,
+                guardian_phone: document.getElementById('guardianPhone').value.trim() || null,
+                guardian_email: document.getElementById('guardianEmail').value.trim() || null,
+                guardian_relationship: document.getElementById('guardianRelationship').value || null,
+                rfid_tag: document.getElementById('rfidTag').value.trim() || null,
+                membership_type: document.getElementById('membershipType').value || null
+            };
+
+            try {
+                const resp = await fetch('/members/api/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await resp.json();
+
+                if (result.success) {
+                    document.getElementById('newMemberId').textContent = result.member_id;
+                    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                    document.getElementById('successScreen').classList.add('show');
+                    document.getElementById('formActions').style.display = 'none';
+                    showToast('success', result.message);
+                } else {
+                    showToast('error', result.error || 'Failed to enroll member');
+                    nextBtn.disabled = false;
+                    nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg> Enroll Member';
+                }
+            } catch (err) {
+                showToast('error', 'Network error. Please try again.');
+                nextBtn.disabled = false;
+                nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" /></svg> Enroll Member';
+            }
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (!validateStep(currentStep)) return;
+
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            } else {
+                submitForm();
+            }
+        });
+
+        // Initialize
+        showStep(1);
+    </script>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</body>
+</html>

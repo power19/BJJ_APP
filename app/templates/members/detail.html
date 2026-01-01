@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>{% if member %}{{ member.full_name }}{% else %}Member{% endif %} - Invictus BJJ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 0% 0%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 100%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                #0f172a;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2rem);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            color: #f1f5f9;
+        }
+
+        .header h1 {
+            flex: 1;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        /* Profile card */
+        .profile-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 2rem;
+            font-weight: 700;
+            overflow: hidden;
+        }
+
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-type {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+
+        .status-active { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-inactive { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-suspended { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+        .payment-current { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .payment-overdue { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        /* Belt display */
+        .belt-display {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .belt-visual {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .belt-bar {
+            width: 60px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stripes {
+            display: flex;
+            gap: 3px;
+        }
+
+        .stripe {
+            width: 4px;
+            height: 16px;
+            background: #f1f5f9;
+            border-radius: 1px;
+        }
+
+        .belt-info {
+            flex: 1;
+        }
+
+        .belt-name {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .belt-stripes {
+            font-size: 0.8125rem;
+            color: #94a3b8;
+        }
+
+        .belt-stats {
+            text-align: right;
+        }
+
+        .training-days {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #06b6d4;
+        }
+
+        .training-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Info sections */
+        .info-section {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-row:first-of-type {
+            padding-top: 0;
+        }
+
+        .info-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .info-value {
+            color: #f1f5f9;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .info-value a {
+            color: #06b6d4;
+            text-decoration: none;
+        }
+
+        /* Attendance history */
+        .attendance-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .attendance-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+        }
+
+        .attendance-date {
+            color: #f1f5f9;
+            font-size: 0.875rem;
+        }
+
+        .attendance-counted {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .counted-yes {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .counted-no {
+            background: rgba(100, 116, 139, 0.2);
+            color: #94a3b8;
+        }
+
+        /* RFID display */
+        .rfid-display {
+            font-family: monospace;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+        }
+
+        /* Not found */
+        .not-found {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .not-found h3 {
+            color: #f59e0b;
+            margin-bottom: 0.5rem;
+        }
+
+        .not-found p {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            color: #f1f5f9;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: none;
+        }
+
+        .action-btn svg { width: 16px; height: 16px; }
+
+        .btn-suspend {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .btn-suspend:hover { background: rgba(245, 158, 11, 0.3); }
+
+        .btn-reactivate {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .btn-reactivate:hover { background: rgba(16, 185, 129, 0.3); }
+
+        .btn-cancel {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-cancel:hover { background: rgba(239, 68, 68, 0.3); }
+
+        .btn-change {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .btn-change:hover { background: rgba(6, 182, 212, 0.3); }
+
+        .btn-payment {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .btn-payment:hover { background: rgba(139, 92, 246, 0.3); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: #1e293b;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(51, 65, 85, 0.5);
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover { background: rgba(71, 85, 105, 0.5); color: #f1f5f9; }
+
+        .modal-body {
+            padding: 1.25rem;
+        }
+
+        .membership-option {
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .membership-option:hover { border-color: #475569; }
+
+        .membership-option.selected {
+            border-color: #06b6d4;
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .membership-option .name { font-weight: 600; color: #f1f5f9; }
+        .membership-option .category { font-size: 0.75rem; color: #64748b; }
+        .membership-option .price { font-weight: 700; color: #10b981; }
+
+        .modal-footer {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid rgba(71, 85, 105, 0.3);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+        }
+
+        .modal-btn-cancel {
+            background: rgba(51, 65, 85, 0.5);
+            color: #94a3b8;
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+        }
+
+        .modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 1rem 1.5rem;
+            background: #1e293b;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border: 1px solid #22c55e; }
+        .toast.error { border: 1px solid #f87171; }
+        .toast svg { width: 20px; height: 20px; }
+        .toast.success svg { color: #22c55e; }
+        .toast.error svg { color: #f87171; }
+
+        .status-cancelled { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .status-expired { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+        .payment-none { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <header class="header">
+            <a href="/members" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1>Member Details</h1>
+        </header>
+
+        {% if member %}
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-photo">
+                {% if member.photo %}
+                <img src="{{ member.photo }}" alt="{{ member.full_name }}">
+                {% else %}
+                {{ member.full_name[:2]|upper if member.full_name else '?' }}
+                {% endif %}
+            </div>
+            <div class="profile-name">{{ member.full_name }}</div>
+            <div class="profile-type">{{ member.member_type }} Member</div>
+            <div class="status-row">
+                <span class="status-badge status-{{ member.status|lower }}">{{ member.status }}</span>
+                {% if member.payment_status %}
+                <span class="status-badge payment-{{ member.payment_status|lower }}">{{ member.payment_status }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Belt Display -->
+        {% if member.current_rank %}
+        <div class="belt-display">
+            <div class="belt-visual">
+                {% if member.current_rank in belt_ranks %}
+                <div class="belt-bar" style="background-color: {{ belt_ranks[member.current_rank].color }}"></div>
+                {% endif %}
+                {% if member.current_stripes %}
+                <div class="stripes">
+                    {% for i in range(member.current_stripes|int) %}
+                    <div class="stripe"></div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="belt-info">
+                <div class="belt-name">
+                    {% if member.current_rank in belt_ranks %}
+                    {{ belt_ranks[member.current_rank].rank_name }}
+                    {% else %}
+                    {{ member.current_rank }}
+                    {% endif %}
+                </div>
+                <div class="belt-stripes">{{ member.current_stripes or 0 }} stripe{% if (member.current_stripes or 0)|int != 1 %}s{% endif %}</div>
+            </div>
+            <div class="belt-stats">
+                <div class="training-days">{{ member.total_training_days or 0 }}</div>
+                <div class="training-label">Training Days</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Contact Info -->
+        <div class="info-section">
+            <div class="section-title">Contact Information</div>
+            {% if member.phone %}
+            <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value"><a href="tel:{{ member.phone }}">{{ member.phone }}</a></span>
+            </div>
+            {% endif %}
+            {% if member.email %}
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value"><a href="mailto:{{ member.email }}">{{ member.email }}</a></span>
+            </div>
+            {% endif %}
+            {% if member.address %}
+            <div class="info-row">
+                <span class="info-label">Address</span>
+                <span class="info-value">{{ member.address }}</span>
+            </div>
+            {% endif %}
+            {% if member.date_of_birth %}
+            <div class="info-row">
+                <span class="info-label">Date of Birth</span>
+                <span class="info-value">{{ member.date_of_birth }}</span>
+            </div>
+            {% endif %}
+            {% if member.gender %}
+            <div class="info-row">
+                <span class="info-label">Gender</span>
+                <span class="info-value">{{ member.gender }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Emergency Contact -->
+        {% if member.emergency_contact or member.emergency_phone %}
+        <div class="info-section">
+            <div class="section-title">Emergency Contact</div>
+            {% if member.emergency_contact %}
+            <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value">{{ member.emergency_contact }}</span>
+            </div>
+            {% endif %}
+            {% if member.emergency_phone %}
+            <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value"><a href="tel:{{ member.emergency_phone }}">{{ member.emergency_phone }}</a></span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Membership Info -->
+        <div class="info-section">
+            <div class="section-title">Membership Details</div>
+            <div class="info-row">
+                <span class="info-label">Member ID</span>
+                <span class="info-value rfid-display">{{ member.name }}</span>
+            </div>
+            {% if member.join_date %}
+            <div class="info-row">
+                <span class="info-label">Join Date</span>
+                <span class="info-value">{{ member.join_date }}</span>
+            </div>
+            {% endif %}
+            {% if member.current_membership_type %}
+            <div class="info-row">
+                <span class="info-label">Membership Type</span>
+                <span class="info-value">{{ member.current_membership_type }}</span>
+            </div>
+            {% endif %}
+            {% if member.rfid_tag %}
+            <div class="info-row">
+                <span class="info-label">RFID Tag</span>
+                <span class="info-value rfid-display">{{ member.rfid_tag }}</span>
+            </div>
+            {% endif %}
+            {% if member.days_at_current_rank %}
+            <div class="info-row">
+                <span class="info-label">Days at Current Rank</span>
+                <span class="info-value">{{ member.days_at_current_rank }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Subscription Management -->
+        <div class="info-section">
+            <div class="section-title">Manage Subscription</div>
+
+            <div class="info-row">
+                <span class="info-label">Current Plan</span>
+                <span class="info-value">{{ member.current_membership_type or 'None' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Payment Status</span>
+                <span class="info-value">
+                    <span class="status-badge payment-{{ (member.payment_status or 'none')|lower }}">
+                        {{ member.payment_status or 'None' }}
+                    </span>
+                </span>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="action-btn btn-change" onclick="openMembershipModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
+                    </svg>
+                    Change Plan
+                </button>
+
+                <button type="button" class="action-btn btn-payment" onclick="togglePaymentStatus()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 7.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5z" />
+                        <path fill-rule="evenodd" d="M1.5 4.875C1.5 3.839 2.34 3 3.375 3h17.25c1.035 0 1.875.84 1.875 1.875v9.75c0 1.036-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 011.5 14.625v-9.75zM8.25 9.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0z" clip-rule="evenodd" />
+                    </svg>
+                    Payment
+                </button>
+            </div>
+
+            <div class="action-buttons" style="margin-top: 0.5rem;">
+                {% if member.status == 'Active' %}
+                <button type="button" class="action-btn btn-suspend" onclick="updateStatus('Suspended')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />
+                    </svg>
+                    Suspend
+                </button>
+                {% endif %}
+
+                {% if member.status == 'Suspended' or member.status == 'Expired' %}
+                <button type="button" class="action-btn btn-reactivate" onclick="updateStatus('Active')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clip-rule="evenodd" />
+                    </svg>
+                    Reactivate
+                </button>
+                {% endif %}
+
+                {% if member.status != 'Cancelled' %}
+                <button type="button" class="action-btn btn-cancel" onclick="confirmCancel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                    </svg>
+                    Cancel
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Attendance -->
+        {% if attendance_history %}
+        <div class="info-section">
+            <div class="section-title">Recent Attendance</div>
+            <div class="attendance-list">
+                {% for att in attendance_history[:10] %}
+                <div class="attendance-item">
+                    <span class="attendance-date">{{ att.check_in_time[:16] if att.check_in_time else 'Unknown' }}</span>
+                    <span class="attendance-counted {% if att.training_counted %}counted-yes{% else %}counted-no{% endif %}">
+                        {% if att.training_counted %}Counted{% else %}Not Counted{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="not-found">
+            <h3>Member Not Found</h3>
+            <p>The requested member could not be found.</p>
+            <a href="/members" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Members
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+        </svg>
+        <span id="toastText"></span>
+    </div>
+
+    <!-- Change Membership Modal -->
+    <div id="membershipModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Change Subscription</h3>
+                <button type="button" class="modal-close" onclick="closeMembershipModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                {% for mt in membership_types %}
+                <div class="membership-option" data-membership="{{ mt.name }}" onclick="selectMembership(this)">
+                    <div>
+                        <div class="name">{{ mt.membership_name }}</div>
+                        <div class="category">{{ mt.membership_category }}</div>
+                    </div>
+                    <div class="price">{{ mt.price|int }} SRD</div>
+                </div>
+                {% endfor %}
+                {% if not membership_types %}
+                <p style="color: #64748b; text-align: center; padding: 1rem;">
+                    No membership types available.<br>
+                    Create them in Settings → Create Default Data
+                </p>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeMembershipModal()">Cancel</button>
+                <button type="button" class="modal-btn modal-btn-confirm" id="confirmMembershipBtn" onclick="saveMembership()" disabled>Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Status Modal -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Update Payment Status</h3>
+                <button type="button" class="modal-close" onclick="closePaymentModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="membership-option" data-payment="Current" onclick="selectPaymentStatus(this)">
+                    <div>
+                        <div class="name">Current</div>
+                        <div class="category">Payment is up to date</div>
+                    </div>
+                    <span class="status-badge payment-current">OK</span>
+                </div>
+                <div class="membership-option" data-payment="Overdue" onclick="selectPaymentStatus(this)">
+                    <div>
+                        <div class="name">Overdue</div>
+                        <div class="category">Payment is overdue</div>
+                    </div>
+                    <span class="status-badge payment-overdue">!</span>
+                </div>
+                <div class="membership-option" data-payment="None" onclick="selectPaymentStatus(this)">
+                    <div>
+                        <div class="name">None</div>
+                        <div class="category">No active subscription</div>
+                    </div>
+                    <span class="status-badge payment-none">-</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closePaymentModal()">Cancel</button>
+                <button type="button" class="modal-btn modal-btn-confirm" id="confirmPaymentBtn" onclick="savePaymentStatus()" disabled>Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const memberId = '{{ member.name if member else "" }}';
+        let selectedMembership = null;
+        let selectedPaymentStatus = null;
+
+        function showToast(type, message) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+            toast.className = `toast ${type} show`;
+            toastText.textContent = message;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Membership Modal
+        function openMembershipModal() {
+            document.getElementById('membershipModal').classList.add('show');
+            selectedMembership = null;
+            document.querySelectorAll('#membershipModal .membership-option').forEach(o => o.classList.remove('selected'));
+            document.getElementById('confirmMembershipBtn').disabled = true;
+        }
+
+        function closeMembershipModal() {
+            document.getElementById('membershipModal').classList.remove('show');
+        }
+
+        function selectMembership(el) {
+            document.querySelectorAll('#membershipModal .membership-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedMembership = el.dataset.membership;
+            document.getElementById('confirmMembershipBtn').disabled = false;
+        }
+
+        async function saveMembership() {
+            if (!selectedMembership) return;
+
+            try {
+                const resp = await fetch(`/members/api/${memberId}/update-membership`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        membership_type: selectedMembership,
+                        payment_status: 'Current'
+                    })
+                });
+
+                const result = await resp.json();
+
+                if (result.success) {
+                    showToast('success', result.message);
+                    closeMembershipModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('error', result.error || 'Failed to update');
+                }
+            } catch (err) {
+                showToast('error', 'Network error');
+            }
+        }
+
+        // Payment Status Modal
+        function togglePaymentStatus() {
+            document.getElementById('paymentModal').classList.add('show');
+            selectedPaymentStatus = null;
+            document.querySelectorAll('#paymentModal .membership-option').forEach(o => o.classList.remove('selected'));
+            document.getElementById('confirmPaymentBtn').disabled = true;
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+        }
+
+        function selectPaymentStatus(el) {
+            document.querySelectorAll('#paymentModal .membership-option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPaymentStatus = el.dataset.payment;
+            document.getElementById('confirmPaymentBtn').disabled = false;
+        }
+
+        async function savePaymentStatus() {
+            if (!selectedPaymentStatus) return;
+
+            try {
+                const resp = await fetch(`/members/api/${memberId}/update-payment-status?payment_status=${selectedPaymentStatus}`, {
+                    method: 'POST'
+                });
+
+                const result = await resp.json();
+
+                if (result.success) {
+                    showToast('success', result.message);
+                    closePaymentModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('error', result.error || 'Failed to update');
+                }
+            } catch (err) {
+                showToast('error', 'Network error');
+            }
+        }
+
+        // Status Updates
+        async function updateStatus(newStatus) {
+            try {
+                const resp = await fetch(`/members/api/${memberId}/update-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const result = await resp.json();
+
+                if (result.success) {
+                    showToast('success', result.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('error', result.error || 'Failed to update status');
+                }
+            } catch (err) {
+                showToast('error', 'Network error');
+            }
+        }
+
+        function confirmCancel() {
+            if (confirm('Are you sure you want to cancel this membership? This action cannot be undone easily.')) {
+                updateStatus('Cancelled');
+            }
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
