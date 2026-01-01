@@ -1,15 +1,17 @@
-# app/routes/enrollment.py
-"""Member enrollment routes for the gym management system."""
+# app/routes/members.py
+"""
+Clean URL routes for member pages.
+UI pages at /members, API endpoints stay at /api/v1/members
+"""
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import JSONResponse
+import requests
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date, datetime
-import requests
+from datetime import date
 
-from ..utils.config import get_config
-
+from app.utils.config import get_config
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -23,45 +25,22 @@ def get_erpnext_client():
 
     erp_config = config.get_erpnext_config()
     url = erp_config.get('url', '')
+    api_key = erp_config.get('api_key', '')
+    api_secret = erp_config.get('api_secret', '')
+
     headers = {
-        'Authorization': f"token {erp_config.get('api_key')}:{erp_config.get('api_secret')}",
+        'Authorization': f'token {api_key}:{api_secret}',
         'Content-Type': 'application/json'
     }
+
     return url, headers, True
 
 
-class EnrollmentRequest(BaseModel):
-    """Member enrollment request model."""
-    # Personal Info
-    first_name: str
-    last_name: str
-    member_type: str = "Adult"  # Adult, Teenager, Child
-    date_of_birth: Optional[str] = None
-    gender: Optional[str] = None
+# ============================================================================
+# UI Pages (Clean URLs)
+# ============================================================================
 
-    # Contact
-    phone: str
-    email: Optional[str] = None
-    address: Optional[str] = None
-
-    # Emergency Contact
-    emergency_contact: Optional[str] = None
-    emergency_phone: Optional[str] = None
-
-    # Parent/Guardian (for minors)
-    parent_member: Optional[str] = None
-
-    # Membership
-    membership_type: Optional[str] = None
-
-    # RFID
-    rfid_tag: Optional[str] = None
-
-    # Photo
-    photo: Optional[str] = None
-
-
-@router.get("/list")
+@router.get("")
 async def members_list_page(request: Request):
     """Render the members list page."""
     url, headers, connected = get_erpnext_client()
@@ -100,7 +79,7 @@ async def members_list_page(request: Request):
             print(f"Error fetching members: {e}")
 
     return templates.TemplateResponse(
-        "enrollment/members_list.html",
+        "members/list.html",
         {
             "request": request,
             "connected": connected,
@@ -110,7 +89,67 @@ async def members_list_page(request: Request):
     )
 
 
-@router.get("/member/{member_id}")
+@router.get("/new")
+async def enrollment_page(request: Request):
+    """Render the enrollment form page."""
+    url, headers, connected = get_erpnext_client()
+
+    membership_types = []
+    belt_ranks = []
+    existing_members = []
+
+    if connected:
+        try:
+            # Fetch membership types
+            resp = requests.get(
+                f"{url}/api/resource/Membership Type",
+                headers=headers,
+                params={"filters": '[["is_active", "=", 1]]', "fields": '["name", "membership_name", "price", "membership_category"]'},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                membership_types = resp.json().get("data", [])
+
+            # Fetch belt ranks (for initial rank - just white belt)
+            resp = requests.get(
+                f"{url}/api/resource/Belt Rank",
+                headers=headers,
+                params={"filters": '[["rank_order", "=", 10]]', "fields": '["name", "rank_name", "color"]'},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                belt_ranks = resp.json().get("data", [])
+
+            # Fetch existing adult members (for optional parent linking)
+            resp = requests.get(
+                f"{url}/api/resource/Gym Member",
+                headers=headers,
+                params={
+                    "filters": '[["member_type", "=", "Adult"], ["status", "=", "Active"]]',
+                    "fields": '["name", "full_name", "phone"]',
+                    "limit_page_length": 500
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                existing_members = resp.json().get("data", [])
+
+        except Exception as e:
+            print(f"Error fetching data: {e}")
+
+    return templates.TemplateResponse(
+        "members/enroll.html",
+        {
+            "request": request,
+            "connected": connected,
+            "membership_types": membership_types,
+            "belt_ranks": belt_ranks,
+            "existing_members": existing_members
+        }
+    )
+
+
+@router.get("/{member_id}")
 async def member_detail_page(request: Request, member_id: str):
     """Render the member detail page."""
     url, headers, connected = get_erpnext_client()
@@ -175,7 +214,7 @@ async def member_detail_page(request: Request, member_id: str):
             print(f"Error fetching member details: {e}")
 
     return templates.TemplateResponse(
-        "enrollment/member_detail.html",
+        "members/detail.html",
         {
             "request": request,
             "connected": connected,
@@ -187,67 +226,47 @@ async def member_detail_page(request: Request, member_id: str):
     )
 
 
-@router.get("/")
-async def enrollment_page(request: Request):
-    """Render the enrollment form page."""
-    url, headers, connected = get_erpnext_client()
+# ============================================================================
+# API Endpoints
+# ============================================================================
 
-    membership_types = []
-    belt_ranks = []
-    existing_members = []
-
-    if connected:
-        try:
-            # Fetch membership types
-            resp = requests.get(
-                f"{url}/api/resource/Membership Type",
-                headers=headers,
-                params={"filters": '[["is_active", "=", 1]]', "fields": '["name", "membership_name", "price", "membership_category"]'},
-                timeout=10
-            )
-            if resp.status_code == 200:
-                membership_types = resp.json().get("data", [])
-
-            # Fetch belt ranks (for initial rank - just white belt)
-            resp = requests.get(
-                f"{url}/api/resource/Belt Rank",
-                headers=headers,
-                params={"filters": '[["rank_order", "=", 10]]', "fields": '["name", "rank_name", "color"]'},
-                timeout=10
-            )
-            if resp.status_code == 200:
-                belt_ranks = resp.json().get("data", [])
-
-            # Fetch existing adult members (for parent linking)
-            resp = requests.get(
-                f"{url}/api/resource/Gym Member",
-                headers=headers,
-                params={
-                    "filters": '[["member_type", "=", "Adult"], ["status", "=", "Active"]]',
-                    "fields": '["name", "full_name", "phone"]',
-                    "limit_page_length": 500
-                },
-                timeout=10
-            )
-            if resp.status_code == 200:
-                existing_members = resp.json().get("data", [])
-
-        except Exception as e:
-            print(f"Error fetching data: {e}")
-
-    return templates.TemplateResponse(
-        "enrollment/enroll.html",
-        {
-            "request": request,
-            "connected": connected,
-            "membership_types": membership_types,
-            "belt_ranks": belt_ranks,
-            "existing_members": existing_members
-        }
-    )
+class EnrollmentRequest(BaseModel):
+    """Enrollment request model."""
+    first_name: str
+    last_name: str
+    member_type: str = "Adult"
+    phone: str
+    email: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    # Parent member (optional - for linking to existing member)
+    parent_member: Optional[str] = None
+    # Guardian info (for non-member parents)
+    guardian_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
+    guardian_email: Optional[str] = None
+    guardian_relationship: Optional[str] = None
+    # Membership
+    rfid_tag: Optional[str] = None
+    membership_type: Optional[str] = None
+    photo: Optional[str] = None
 
 
-@router.post("/create")
+class StatusUpdateRequest(BaseModel):
+    """Request to update member status."""
+    status: str
+
+
+class MembershipUpdateRequest(BaseModel):
+    """Request to update member's subscription."""
+    membership_type: str
+    payment_status: Optional[str] = None
+
+
+@router.post("/api/create")
 async def create_member(enrollment: EnrollmentRequest):
     """Create a new gym member."""
     url, headers, connected = get_erpnext_client()
@@ -304,6 +323,15 @@ async def create_member(enrollment: EnrollmentRequest):
             member_data["emergency_phone"] = enrollment.emergency_phone
         if enrollment.parent_member:
             member_data["parent_member"] = enrollment.parent_member
+        # Guardian info for non-member parents
+        if enrollment.guardian_name:
+            member_data["guardian_name"] = enrollment.guardian_name
+        if enrollment.guardian_phone:
+            member_data["guardian_phone"] = enrollment.guardian_phone
+        if enrollment.guardian_email:
+            member_data["guardian_email"] = enrollment.guardian_email
+        if enrollment.guardian_relationship:
+            member_data["guardian_relationship"] = enrollment.guardian_relationship
         if enrollment.rfid_tag:
             member_data["rfid_tag"] = enrollment.rfid_tag
         if enrollment.membership_type:
@@ -331,7 +359,6 @@ async def create_member(enrollment: EnrollmentRequest):
             })
         else:
             error_msg = resp.json().get("exc", resp.text)
-            # Check for duplicate RFID
             if "Duplicate" in str(error_msg) and "rfid" in str(error_msg).lower():
                 return JSONResponse({
                     "success": False,
@@ -349,113 +376,9 @@ async def create_member(enrollment: EnrollmentRequest):
         }, status_code=500)
 
 
-@router.get("/check-rfid/{rfid_tag}")
-async def check_rfid(rfid_tag: str):
-    """Check if an RFID tag is already in use."""
-    url, headers, connected = get_erpnext_client()
-
-    if not connected:
-        return JSONResponse({"success": False, "error": "Not connected"}, status_code=503)
-
-    try:
-        # Check Gym Member
-        resp = requests.get(
-            f"{url}/api/resource/Gym Member",
-            headers=headers,
-            params={"filters": f'[["rfid_tag", "=", "{rfid_tag}"]]', "fields": '["name", "full_name"]'},
-            timeout=10
-        )
-
-        if resp.status_code == 200:
-            members = resp.json().get("data", [])
-            if members:
-                return JSONResponse({
-                    "success": True,
-                    "in_use": True,
-                    "used_by": members[0].get("full_name", "Unknown")
-                })
-
-        # Check Gym Staff
-        resp = requests.get(
-            f"{url}/api/resource/Gym Staff",
-            headers=headers,
-            params={"filters": f'[["rfid_tag", "=", "{rfid_tag}"]]', "fields": '["name", "staff_name"]'},
-            timeout=10
-        )
-
-        if resp.status_code == 200:
-            staff = resp.json().get("data", [])
-            if staff:
-                return JSONResponse({
-                    "success": True,
-                    "in_use": True,
-                    "used_by": f"Staff: {staff[0].get('staff_name', 'Unknown')}"
-                })
-
-        return JSONResponse({
-            "success": True,
-            "in_use": False
-        })
-
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-
-@router.get("/search-parent")
-async def search_parent(q: str = ""):
-    """Search for potential parent members."""
-    url, headers, connected = get_erpnext_client()
-
-    if not connected:
-        return JSONResponse({"success": False, "error": "Not connected"}, status_code=503)
-
-    try:
-        filters = '[["member_type", "=", "Adult"], ["status", "=", "Active"]]'
-        if q:
-            filters = f'[["member_type", "=", "Adult"], ["status", "=", "Active"], ["full_name", "like", "%{q}%"]]'
-
-        resp = requests.get(
-            f"{url}/api/resource/Gym Member",
-            headers=headers,
-            params={
-                "filters": filters,
-                "fields": '["name", "full_name", "phone"]',
-                "limit_page_length": 20
-            },
-            timeout=10
-        )
-
-        if resp.status_code == 200:
-            members = resp.json().get("data", [])
-            return JSONResponse({
-                "success": True,
-                "members": members
-            })
-
-        return JSONResponse({"success": False, "members": []})
-
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-
-# ============================================================================
-# Member Management API Endpoints
-# ============================================================================
-
-class StatusUpdateRequest(BaseModel):
-    """Request to update member status."""
-    status: str  # Active, Suspended, Cancelled
-
-
-class MembershipUpdateRequest(BaseModel):
-    """Request to update member's subscription."""
-    membership_type: str
-    payment_status: Optional[str] = None  # Current, Overdue, None
-
-
-@router.post("/member/{member_id}/update-status")
+@router.post("/api/{member_id}/update-status")
 async def update_member_status(member_id: str, req: StatusUpdateRequest):
-    """Update a member's status (suspend, reactivate, cancel)."""
+    """Update a member's status."""
     url, headers, connected = get_erpnext_client()
 
     if not connected:
@@ -469,7 +392,6 @@ async def update_member_status(member_id: str, req: StatusUpdateRequest):
         }, status_code=400)
 
     try:
-        # Update member status
         resp = requests.put(
             f"{url}/api/resource/Gym Member/{member_id}",
             headers=headers,
@@ -500,19 +422,16 @@ async def update_member_status(member_id: str, req: StatusUpdateRequest):
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
-@router.post("/member/{member_id}/update-membership")
+@router.post("/api/{member_id}/update-membership")
 async def update_member_membership(member_id: str, req: MembershipUpdateRequest):
-    """Update a member's current membership/subscription type."""
+    """Update a member's subscription type."""
     url, headers, connected = get_erpnext_client()
 
     if not connected:
         return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
 
     try:
-        update_data = {
-            "current_membership_type": req.membership_type
-        }
-
+        update_data = {"current_membership_type": req.membership_type}
         if req.payment_status:
             update_data["payment_status"] = req.payment_status
 
@@ -529,17 +448,16 @@ async def update_member_membership(member_id: str, req: MembershipUpdateRequest)
                 "message": "Membership updated successfully"
             })
         else:
-            error_msg = resp.json().get("exc", resp.text)
             return JSONResponse({
                 "success": False,
-                "error": f"Failed to update membership: {error_msg[:200]}"
+                "error": "Failed to update membership"
             }, status_code=400)
 
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
-@router.post("/member/{member_id}/update-payment-status")
+@router.post("/api/{member_id}/update-payment-status")
 async def update_payment_status(member_id: str, payment_status: str):
     """Update a member's payment status."""
     url, headers, connected = get_erpnext_client()
@@ -551,7 +469,7 @@ async def update_payment_status(member_id: str, payment_status: str):
     if payment_status not in valid_statuses:
         return JSONResponse({
             "success": False,
-            "error": f"Invalid payment status. Must be one of: {', '.join(valid_statuses)}"
+            "error": f"Invalid payment status"
         }, status_code=400)
 
     try:
@@ -577,34 +495,32 @@ async def update_payment_status(member_id: str, payment_status: str):
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
-@router.get("/membership-types")
-async def get_membership_types():
-    """Get all active membership types."""
+@router.get("/api/check-rfid/{rfid_tag}")
+async def check_rfid(rfid_tag: str):
+    """Check if an RFID tag is already in use."""
     url, headers, connected = get_erpnext_client()
 
     if not connected:
-        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+        return JSONResponse({"success": False, "error": "Not connected"}, status_code=503)
 
     try:
         resp = requests.get(
-            f"{url}/api/resource/Membership Type",
+            f"{url}/api/resource/Gym Member",
             headers=headers,
-            params={
-                "filters": '[["is_active", "=", 1]]',
-                "fields": '["name", "membership_name", "price", "membership_category", "is_recurring"]',
-                "limit_page_length": 100
-            },
+            params={"filters": f'[["rfid_tag", "=", "{rfid_tag}"]]', "fields": '["name", "full_name"]'},
             timeout=10
         )
 
         if resp.status_code == 200:
-            types = resp.json().get("data", [])
-            return JSONResponse({
-                "success": True,
-                "membership_types": types
-            })
+            members = resp.json().get("data", [])
+            if members:
+                return JSONResponse({
+                    "success": True,
+                    "in_use": True,
+                    "used_by": members[0].get("full_name", "Unknown")
+                })
 
-        return JSONResponse({"success": False, "membership_types": []})
+        return JSONResponse({"success": True, "in_use": False})
 
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)

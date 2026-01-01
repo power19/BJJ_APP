@@ -238,6 +238,12 @@
         }
         .nav-card.amber .card-icon svg { color: #1e293b; }
 
+        .nav-card.cyan .card-icon {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+        }
+        .nav-card.cyan .card-icon svg { color: white; }
+
         .card-title {
             font-size: 1rem;
             font-weight: 600;
@@ -441,6 +447,7 @@
         .nav-card:nth-child(5) { animation-delay: 0.3s; }
         .nav-card:nth-child(6) { animation-delay: 0.35s; }
         .nav-card:nth-child(7) { animation-delay: 0.4s; }
+        .nav-card:nth-child(8) { animation-delay: 0.45s; }
     </style>
 </head>
 <body>
@@ -508,7 +515,7 @@
             </a>
 
             <!-- Enrollment -->
-            <a href="/api/v1/enrollment" class="nav-card pink">
+            <a href="/members/new" class="nav-card pink">
                 <div class="card-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M6.25 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM3.25 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM19.75 7.5a.75.75 0 00-1.5 0v2.25H16a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25H22a.75.75 0 000-1.5h-2.25V7.5z" />
@@ -527,6 +534,17 @@
                 </div>
                 <span class="card-title">Promotion</span>
                 <span class="card-desc">Belt rankings</span>
+            </a>
+
+            <!-- Members -->
+            <a href="/members" class="nav-card cyan">
+                <div class="card-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z" />
+                    </svg>
+                </div>
+                <span class="card-title">Members</span>
+                <span class="card-desc">View all members</span>
             </a>
 
             <!-- Settings -->
