@@ -1,13 +1,61 @@
 # app/routes/billing.py
 from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Dict, Any
 import json
 from ..services.billing_service import BillingService
+from ..services.auto_billing import get_billing_service
 from ..utils.erp_client import ERPNextClient, get_erp_client
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+# =============================================================================
+# Auto-Billing Endpoints
+# =============================================================================
+
+@router.get("/auto/preview")
+async def preview_billing():
+    """
+    Preview upcoming invoices without creating them.
+    Shows which members are due for billing and the expected amounts.
+    """
+    billing_service = get_billing_service()
+    preview = billing_service.preview_billing_cycle()
+    return JSONResponse(preview)
+
+
+@router.post("/auto/run")
+async def run_billing_cycle():
+    """
+    Run the billing cycle - generate invoices for all members due.
+    Creates Sales Invoices in ERPNext for members with recurring memberships.
+    """
+    billing_service = get_billing_service()
+    result = billing_service.run_billing_cycle()
+    return JSONResponse(result)
+
+
+@router.get("/auto/due")
+async def get_members_due():
+    """Get list of members due for billing today."""
+    billing_service = get_billing_service()
+    if not billing_service._setup_connection():
+        return JSONResponse({"success": False, "error": "ERPNext not connected"})
+
+    members = billing_service.get_members_due_for_billing()
+    return JSONResponse({
+        "success": True,
+        "count": len(members),
+        "members": members
+    })
+
+
+# =============================================================================
+# Customer Billing Endpoints
+# =============================================================================
 
 @router.get("/customer/{customer_name}")
 async def get_billing_page(

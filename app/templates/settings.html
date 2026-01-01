@@ -194,6 +194,42 @@
     </section>
     {% endif %}
 
+    <!-- Auto-Billing -->
+    {% if is_connected %}
+    <section class="settings-section">
+        <div class="section-header">
+            <h2>Membership Billing</h2>
+            <p class="section-desc">Automatic invoice generation for recurring memberships</p>
+        </div>
+
+        <div class="card">
+            <div class="billing-status" id="billingStatus">
+                <div class="backup-loading">
+                    <div class="spinner-small"></div>
+                    <span>Checking billing status...</span>
+                </div>
+            </div>
+
+            <div class="billing-actions" style="margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary btn-block" id="previewBillingBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                        <path fill-rule="evenodd" d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="previewBillingBtnText">Preview Due Invoices</span>
+                </button>
+                <button type="button" class="btn btn-primary btn-block" id="runBillingBtn" style="margin-top: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 9a.75.75 0 00-1.5 0v2.25H9a.75.75 0 000 1.5h2.25V15a.75.75 0 001.5 0v-2.25H15a.75.75 0 000-1.5h-2.25V9z" clip-rule="evenodd" />
+                    </svg>
+                    <span id="runBillingBtnText">Generate Invoices Now</span>
+                </button>
+            </div>
+            <p class="hint" style="margin-top: 0.75rem;">Auto-billing runs daily at 6:00 AM for members with recurring memberships</p>
+        </div>
+    </section>
+    {% endif %}
+
     <!-- App Info -->
     <section class="settings-section">
         <div class="section-header">
@@ -990,6 +1026,121 @@
 
                 updateDoctypesBtn.disabled = false;
                 updateDoctypesBtnText.textContent = 'Update Doctypes';
+            });
+        }
+    }
+
+    // Billing Management
+    const billingStatus = document.getElementById('billingStatus');
+    const previewBillingBtn = document.getElementById('previewBillingBtn');
+    const runBillingBtn = document.getElementById('runBillingBtn');
+    const previewBillingBtnText = document.getElementById('previewBillingBtnText');
+    const runBillingBtnText = document.getElementById('runBillingBtnText');
+
+    if (billingStatus) {
+        // Load billing status
+        async function loadBillingStatus() {
+            try {
+                const response = await fetch('/api/v1/billing/auto/preview');
+                const result = await response.json();
+
+                if (result.success) {
+                    const dueCount = result.members_due || 0;
+                    const totalAmount = result.total_amount || 0;
+
+                    if (dueCount > 0) {
+                        billingStatus.innerHTML = `
+                            <div class="init-pending">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clip-rule="evenodd" />
+                                </svg>
+                                <span>${dueCount} member(s) due for billing - SRD ${totalAmount.toLocaleString()}</span>
+                            </div>
+                        `;
+                    } else {
+                        billingStatus.innerHTML = `
+                            <div class="init-complete">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                                </svg>
+                                <span>No invoices due today</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    billingStatus.innerHTML = '<p class="hint">Could not check billing status</p>';
+                }
+            } catch (error) {
+                billingStatus.innerHTML = '<p class="hint">Could not check billing status</p>';
+            }
+        }
+
+        loadBillingStatus();
+
+        // Preview billing
+        if (previewBillingBtn) {
+            previewBillingBtn.addEventListener('click', async () => {
+                previewBillingBtn.disabled = true;
+                previewBillingBtnText.textContent = 'Loading...';
+
+                try {
+                    const response = await fetch('/api/v1/billing/auto/preview');
+                    const result = await response.json();
+
+                    if (result.success) {
+                        if (result.members_due === 0) {
+                            showToast('success', 'No members due for billing');
+                        } else {
+                            let details = `${result.members_due} members due:\n`;
+                            result.members.forEach(m => {
+                                if (m.is_recurring) {
+                                    details += `- ${m.name}: SRD ${m.amount}\n`;
+                                }
+                            });
+                            alert(`Billing Preview\n\nTotal: SRD ${result.total_amount.toLocaleString()}\n\n${details}`);
+                        }
+                    } else {
+                        showToast('error', result.error || 'Failed to preview billing');
+                    }
+                } catch (error) {
+                    showToast('error', 'Failed to preview billing');
+                }
+
+                previewBillingBtn.disabled = false;
+                previewBillingBtnText.textContent = 'Preview Due Invoices';
+            });
+        }
+
+        // Run billing
+        if (runBillingBtn) {
+            runBillingBtn.addEventListener('click', async () => {
+                if (!confirm('This will generate invoices for all members due for billing. Continue?')) {
+                    return;
+                }
+
+                runBillingBtn.disabled = true;
+                runBillingBtnText.textContent = 'Generating...';
+
+                try {
+                    const response = await fetch('/api/v1/billing/auto/run', { method: 'POST' });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast('success', result.message || 'Billing completed');
+                        loadBillingStatus();
+                    } else {
+                        showToast('error', result.error || 'Billing failed');
+                    }
+
+                    if (result.errors && result.errors.length > 0) {
+                        console.log('Billing errors:', result.errors);
+                    }
+                } catch (error) {
+                    showToast('error', 'Failed to run billing');
+                }
+
+                runBillingBtn.disabled = false;
+                runBillingBtnText.textContent = 'Generate Invoices Now';
             });
         }
     }
