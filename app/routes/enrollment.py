@@ -61,6 +61,116 @@ class EnrollmentRequest(BaseModel):
     photo: Optional[str] = None
 
 
+@router.get("/list")
+async def members_list_page(request: Request):
+    """Render the members list page."""
+    url, headers, connected = get_erpnext_client()
+
+    members = []
+    belt_ranks = {}
+
+    if connected:
+        try:
+            # Fetch all members
+            resp = requests.get(
+                f"{url}/api/resource/Gym Member",
+                headers=headers,
+                params={
+                    "fields": '["name", "full_name", "phone", "email", "member_type", "status", "current_rank", "current_stripes", "payment_status", "join_date", "rfid_tag", "photo"]',
+                    "order_by": "full_name asc",
+                    "limit_page_length": 500
+                },
+                timeout=15
+            )
+            if resp.status_code == 200:
+                members = resp.json().get("data", [])
+
+            # Fetch belt ranks for display
+            resp = requests.get(
+                f"{url}/api/resource/Belt Rank",
+                headers=headers,
+                params={"fields": '["name", "rank_name", "color"]', "limit_page_length": 100},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                ranks = resp.json().get("data", [])
+                belt_ranks = {r["name"]: r for r in ranks}
+
+        except Exception as e:
+            print(f"Error fetching members: {e}")
+
+    return templates.TemplateResponse(
+        "enrollment/members_list.html",
+        {
+            "request": request,
+            "connected": connected,
+            "members": members,
+            "belt_ranks": belt_ranks
+        }
+    )
+
+
+@router.get("/member/{member_id}")
+async def member_detail_page(request: Request, member_id: str):
+    """Render the member detail page."""
+    url, headers, connected = get_erpnext_client()
+
+    member = None
+    belt_ranks = {}
+    attendance_history = []
+
+    if connected:
+        try:
+            # Fetch member details
+            resp = requests.get(
+                f"{url}/api/resource/Gym Member/{member_id}",
+                headers=headers,
+                timeout=10
+            )
+            if resp.status_code == 200:
+                member = resp.json().get("data", {})
+
+            # Fetch belt ranks for display
+            resp = requests.get(
+                f"{url}/api/resource/Belt Rank",
+                headers=headers,
+                params={"fields": '["name", "rank_name", "color"]', "limit_page_length": 100},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                ranks = resp.json().get("data", [])
+                belt_ranks = {r["name"]: r for r in ranks}
+
+            # Fetch recent attendance
+            resp = requests.get(
+                f"{url}/api/resource/Gym Attendance",
+                headers=headers,
+                params={
+                    "filters": f'[["member", "=", "{member_id}"]]',
+                    "fields": '["name", "check_in_time", "training_counted"]',
+                    "order_by": "check_in_time desc",
+                    "limit_page_length": 20
+                },
+                timeout=10
+            )
+            if resp.status_code == 200:
+                attendance_history = resp.json().get("data", [])
+
+        except Exception as e:
+            print(f"Error fetching member details: {e}")
+
+    return templates.TemplateResponse(
+        "enrollment/member_detail.html",
+        {
+            "request": request,
+            "connected": connected,
+            "member": member,
+            "belt_ranks": belt_ranks,
+            "attendance_history": attendance_history
+        }
+    )
+
+
 @router.get("/")
 async def enrollment_page(request: Request):
     """Render the enrollment form page."""
