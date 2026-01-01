@@ -623,6 +623,17 @@ class ERPNextInitializer:
             )
 
             if update_response.status_code == 200:
+                # Clear cache and reload doctype to apply changes
+                try:
+                    requests.post(
+                        f"{self._url}/api/method/frappe.client.clear_cache",
+                        headers=self._headers,
+                        json={"doctype": doctype_name},
+                        timeout=10
+                    )
+                except:
+                    pass  # Cache clear is optional
+
                 field_names = [f.get("fieldname") for f in missing_fields]
                 return True, f"Added fields to {doctype_name}: {', '.join(field_names)}"
             else:

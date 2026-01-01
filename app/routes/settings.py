@@ -429,3 +429,51 @@ async def update_doctypes():
         })
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)})
+
+
+@router.get("/init/check-fields/{doctype}")
+async def check_doctype_fields(doctype: str):
+    """Check which fields exist in a doctype."""
+    config = get_config()
+
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "ERPNext not configured"})
+
+    erp_config = config.get_erpnext_config()
+    url = erp_config.get('url', '')
+    api_key = erp_config.get('api_key', '')
+    api_secret = erp_config.get('api_secret', '')
+
+    headers = {
+        'Authorization': f'token {api_key}:{api_secret}',
+        'Content-Type': 'application/json'
+    }
+
+    try:
+        import requests
+        response = requests.get(
+            f"{url}/api/resource/DocType/{doctype}",
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code != 200:
+            return JSONResponse({"success": False, "error": f"Could not fetch {doctype}"})
+
+        doc = response.json().get("data", {})
+        fields = [f.get("fieldname") for f in doc.get("fields", [])]
+
+        # Check for guardian fields specifically
+        guardian_fields = ["guardian_name", "guardian_phone", "guardian_email", "guardian_relationship"]
+        guardian_status = {f: f in fields for f in guardian_fields}
+
+        return JSONResponse({
+            "success": True,
+            "doctype": doctype,
+            "total_fields": len(fields),
+            "all_fields": fields,
+            "guardian_fields": guardian_status,
+            "guardian_fields_exist": all(guardian_status.values())
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
