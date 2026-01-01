@@ -103,6 +103,11 @@ class AutoBillingService:
                 if not customer_name:
                     return False, "Could not create customer record", None
 
+            # Ensure item exists for this membership type
+            item_code = self._ensure_item_exists(membership_type)
+            if not item_code:
+                return False, "Could not create item for membership", None
+
             # Calculate due date (usually immediate or within a few days)
             posting_date = date.today().isoformat()
             due_date = (date.today() + timedelta(days=7)).isoformat()
@@ -117,12 +122,9 @@ class AutoBillingService:
                 "currency": "SRD",
                 "items": [
                     {
-                        "item_code": membership_type.get("membership_name", "Membership"),
-                        "item_name": membership_type.get("membership_name", "Membership"),
-                        "description": f"Membership: {membership_type.get('membership_name')} for {member.get('full_name')}",
+                        "item_code": item_code,
                         "qty": 1,
-                        "rate": float(membership_type.get("price", 0)),
-                        "uom": "Nos"
+                        "rate": float(membership_type.get("price", 0))
                     }
                 ],
                 "remarks": f"Auto-generated invoice for {member.get('full_name')} - {membership_type.get('membership_name')}"
@@ -139,13 +141,89 @@ class AutoBillingService:
             if response.status_code in [200, 201]:
                 result = response.json()
                 invoice_name = result.get("data", {}).get("name")
-                return True, f"Invoice {invoice_name} created", invoice_name
+
+                # Submit the invoice so it shows up properly
+                submit_response = requests.put(
+                    f"{self._url}/api/resource/Sales Invoice/{invoice_name}",
+                    headers=self._headers,
+                    json={"docstatus": 1},
+                    timeout=10
+                )
+
+                if submit_response.status_code == 200:
+                    return True, f"Invoice {invoice_name} created and submitted", invoice_name
+                else:
+                    return True, f"Invoice {invoice_name} created (draft)", invoice_name
             else:
                 error = response.json().get("exc", response.text)
+                print(f"[Auto-Billing] Invoice creation failed: {error[:500]}")
                 return False, f"Failed to create invoice: {error[:200]}", None
 
         except Exception as e:
+            print(f"[Auto-Billing] Exception: {e}")
             return False, f"Error creating invoice: {str(e)}", None
+
+    def _ensure_item_exists(self, membership_type: Dict) -> Optional[str]:
+        """Ensure an Item exists for this membership type, create if needed."""
+        item_name = membership_type.get("membership_name", "Membership")
+
+        try:
+            # Check if item exists
+            response = requests.get(
+                f"{self._url}/api/resource/Item",
+                headers=self._headers,
+                params={
+                    "filters": f'[["item_name", "=", "{item_name}"]]',
+                    "fields": '["name", "item_code"]'
+                },
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                items = response.json().get("data", [])
+                if items:
+                    return items[0].get("name") or items[0].get("item_code")
+
+            # Create the item
+            item_data = {
+                "doctype": "Item",
+                "item_code": item_name,
+                "item_name": item_name,
+                "item_group": "Services",
+                "stock_uom": "Nos",
+                "is_stock_item": 0,
+                "is_sales_item": 1,
+                "is_service_item": 1,
+                "description": f"Gym Membership: {item_name}"
+            }
+
+            create_response = requests.post(
+                f"{self._url}/api/resource/Item",
+                headers=self._headers,
+                json=item_data,
+                timeout=10
+            )
+
+            if create_response.status_code in [200, 201]:
+                return item_name
+            else:
+                # Try with different item_group if Services doesn't exist
+                item_data["item_group"] = "All Item Groups"
+                create_response = requests.post(
+                    f"{self._url}/api/resource/Item",
+                    headers=self._headers,
+                    json=item_data,
+                    timeout=10
+                )
+                if create_response.status_code in [200, 201]:
+                    return item_name
+
+            print(f"[Auto-Billing] Failed to create item: {create_response.text[:200]}")
+            return None
+
+        except Exception as e:
+            print(f"[Auto-Billing] Error ensuring item exists: {e}")
+            return None
 
     def _ensure_customer_exists(self, member: Dict) -> Optional[str]:
         """Ensure a customer record exists for the member and return customer name."""
