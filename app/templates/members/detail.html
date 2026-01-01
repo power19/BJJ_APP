@@ -658,6 +658,43 @@
         </div>
         {% endif %}
 
+        <!-- Guardian Info (for minors) -->
+        {% if member.guardian_name or member.guardian_phone or member.parent_member %}
+        <div class="info-section">
+            <div class="section-title">Parent / Guardian</div>
+            {% if member.guardian_name %}
+            <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value">{{ member.guardian_name }}</span>
+            </div>
+            {% endif %}
+            {% if member.guardian_phone %}
+            <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value"><a href="tel:{{ member.guardian_phone }}">{{ member.guardian_phone }}</a></span>
+            </div>
+            {% endif %}
+            {% if member.guardian_email %}
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value"><a href="mailto:{{ member.guardian_email }}">{{ member.guardian_email }}</a></span>
+            </div>
+            {% endif %}
+            {% if member.guardian_relationship %}
+            <div class="info-row">
+                <span class="info-label">Relationship</span>
+                <span class="info-value">{{ member.guardian_relationship }}</span>
+            </div>
+            {% endif %}
+            {% if member.parent_member %}
+            <div class="info-row">
+                <span class="info-label">Linked Member</span>
+                <span class="info-value"><a href="/members/{{ member.parent_member }}">{{ member.parent_name or member.parent_member }}</a></span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Membership Info -->
         <div class="info-section">
             <div class="section-title">Membership Details</div>
