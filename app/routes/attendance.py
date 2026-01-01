@@ -3,7 +3,7 @@
 RFID Attendance scanning routes.
 Handles member check-in via RFID tag scanning.
 """
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, date, timedelta
@@ -14,6 +14,10 @@ from ..utils.config import get_config
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+# Simple in-memory cache for member lookups (clears after 5 minutes)
+_member_cache = {}
+_cache_timeout = 300  # 5 minutes
 
 
 def get_erpnext_client():
@@ -29,6 +33,42 @@ def get_erpnext_client():
         'Content-Type': 'application/json'
     }
     return url, headers, True
+
+
+def update_member_stats_background(url: str, headers: dict, member_id: str,
+                                    new_days_at_rank: int, new_total_days: int,
+                                    current_rank: str):
+    """Background task to update member stats after check-in."""
+    try:
+        update_data = {
+            "days_at_current_rank": new_days_at_rank,
+            "total_training_days": new_total_days
+        }
+
+        # Check if eligible for promotion
+        if current_rank:
+            try:
+                rank_response = requests.get(
+                    f"{url}/api/resource/Belt Rank/{current_rank}",
+                    headers=headers,
+                    timeout=5
+                )
+                if rank_response.status_code == 200:
+                    rank_data = rank_response.json().get("data", {})
+                    days_required = rank_data.get("days_required", 0)
+                    if days_required > 0 and new_days_at_rank >= days_required:
+                        update_data["eligible_for_promotion"] = 1
+            except:
+                pass
+
+        requests.put(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            json=update_data,
+            timeout=5
+        )
+    except Exception as e:
+        print(f"Background update failed: {e}")
 
 
 @router.get("/scan", response_class=HTMLResponse)
@@ -312,6 +352,160 @@ async def check_in_member(request: Request):
             }
         })
 
+    except Exception as e:
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
+
+
+@router.post("/fast-check-in")
+async def fast_check_in(request: Request, background_tasks: BackgroundTasks):
+    """
+    Fast check-in endpoint optimized for speed.
+    - Combines lookup + check + create into minimal API calls
+    - Uses background tasks for non-critical updates
+    - Returns immediately after attendance is recorded
+    """
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({
+            "success": False,
+            "error": "ERPNext not connected"
+        }, status_code=503)
+
+    try:
+        body = await request.json()
+        rfid_tag = body.get("rfid_tag", "").strip()
+
+        if not rfid_tag:
+            return JSONResponse({
+                "success": False,
+                "error": "RFID tag required"
+            }, status_code=400)
+
+        today = date.today().isoformat()
+        now = datetime.now()
+
+        # Single query: get member with all needed fields
+        lookup_response = requests.get(
+            f"{url}/api/resource/Gym Member",
+            headers=headers,
+            params={
+                "filters": f'[["rfid_tag", "=", "{rfid_tag}"]]',
+                "fields": '["name", "first_name", "last_name", "full_name", "photo", "status", "payment_status", "days_at_current_rank", "total_training_days", "current_rank"]'
+            },
+            timeout=5  # Reduced timeout
+        )
+
+        if lookup_response.status_code != 200:
+            return JSONResponse({
+                "success": False,
+                "error": "Connection error"
+            }, status_code=500)
+
+        members = lookup_response.json().get("data", [])
+        if not members:
+            return JSONResponse({
+                "success": False,
+                "error": "Member not found"
+            }, status_code=404)
+
+        member = members[0]
+        member_id = member["name"]
+        full_name = member.get("full_name") or f"{member.get('first_name', '')} {member.get('last_name', '')}".strip()
+
+        # Check member status
+        if member.get("status") != "Active":
+            return JSONResponse({
+                "success": False,
+                "error": f"Member {member.get('status', 'inactive')}",
+                "member_name": full_name
+            }, status_code=400)
+
+        # Check if already checked in today (quick check)
+        existing = requests.get(
+            f"{url}/api/resource/Gym Attendance",
+            headers=headers,
+            params={
+                "filters": f'[["member", "=", "{member_id}"], ["attendance_date", "=", "{today}"]]',
+                "fields": '["name"]',
+                "limit_page_length": 1
+            },
+            timeout=3
+        )
+
+        if existing.status_code == 200 and existing.json().get("data"):
+            # Already checked in - return immediately
+            return JSONResponse({
+                "success": True,
+                "already_checked_in": True,
+                "member": {
+                    "full_name": full_name,
+                    "photo": member.get("photo"),
+                    "total_training_days": member.get("total_training_days", 0)
+                }
+            })
+
+        # Create attendance record
+        payment_current = member.get("payment_status") == "Current"
+        attendance_data = {
+            "doctype": "Gym Attendance",
+            "member": member_id,
+            "attendance_date": today,
+            "check_in_time": now.strftime("%H:%M:%S"),
+            "rfid_tag": rfid_tag,
+            "counts_towards_rank": 1 if payment_current else 0,
+            "payment_was_current": 1 if payment_current else 0
+        }
+
+        create_response = requests.post(
+            f"{url}/api/resource/Gym Attendance",
+            headers=headers,
+            json=attendance_data,
+            timeout=5
+        )
+
+        if create_response.status_code not in [200, 201]:
+            return JSONResponse({
+                "success": False,
+                "error": "Failed to record attendance"
+            }, status_code=500)
+
+        # Calculate new stats
+        new_days_at_rank = member.get("days_at_current_rank", 0)
+        new_total_days = member.get("total_training_days", 0)
+
+        if payment_current:
+            new_days_at_rank += 1
+            new_total_days += 1
+
+            # Update member stats in background (non-blocking)
+            background_tasks.add_task(
+                update_member_stats_background,
+                url, headers, member_id,
+                new_days_at_rank, new_total_days,
+                member.get("current_rank")
+            )
+
+        # Return immediately - don't wait for stats update
+        return JSONResponse({
+            "success": True,
+            "member": {
+                "full_name": full_name,
+                "photo": member.get("photo"),
+                "days_at_current_rank": new_days_at_rank,
+                "total_training_days": new_total_days,
+                "payment_current": payment_current
+            }
+        })
+
+    except requests.exceptions.Timeout:
+        return JSONResponse({
+            "success": False,
+            "error": "Connection timeout"
+        }, status_code=504)
     except Exception as e:
         return JSONResponse({
             "success": False,
