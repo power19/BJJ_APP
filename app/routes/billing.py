@@ -53,6 +53,114 @@ async def get_members_due():
     })
 
 
+@router.get("/auto/test-invoice")
+async def test_invoice_creation():
+    """Test invoice creation with a single member to see detailed errors."""
+    import requests
+    from app.utils.config import get_config
+
+    config = get_config()
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "Not configured"})
+
+    erp_config = config.get_erpnext_config()
+    url = erp_config.get('url', '')
+    headers = {
+        'Authorization': f"token {erp_config.get('api_key', '')}:{erp_config.get('api_secret', '')}",
+        'Content-Type': 'application/json'
+    }
+    company = config.get_company()
+
+    results = {"steps": []}
+
+    # Step 1: Check if Item Group "Services" exists
+    try:
+        resp = requests.get(
+            f"{url}/api/resource/Item Group/Services",
+            headers=headers,
+            timeout=10
+        )
+        results["steps"].append({
+            "step": "Check Item Group 'Services'",
+            "exists": resp.status_code == 200
+        })
+
+        if resp.status_code != 200:
+            # Try to find available item groups
+            resp2 = requests.get(
+                f"{url}/api/resource/Item Group",
+                headers=headers,
+                params={"fields": '["name"]', "limit_page_length": 20},
+                timeout=10
+            )
+            if resp2.status_code == 200:
+                results["available_item_groups"] = [g["name"] for g in resp2.json().get("data", [])]
+    except Exception as e:
+        results["steps"].append({"step": "Check Item Group", "error": str(e)})
+
+    # Step 2: Check for a test customer
+    try:
+        resp = requests.get(
+            f"{url}/api/resource/Customer",
+            headers=headers,
+            params={"fields": '["name", "customer_name"]', "limit_page_length": 1},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            customers = resp.json().get("data", [])
+            results["steps"].append({
+                "step": "Check Customers",
+                "found": len(customers),
+                "first_customer": customers[0] if customers else None
+            })
+    except Exception as e:
+        results["steps"].append({"step": "Check Customers", "error": str(e)})
+
+    # Step 3: Try to create a test invoice
+    try:
+        test_customer = results["steps"][-1].get("first_customer", {}).get("name") if results["steps"] else None
+        if test_customer:
+            # First ensure we have an item
+            item_resp = requests.get(
+                f"{url}/api/resource/Item",
+                headers=headers,
+                params={"fields": '["name", "item_code"]', "limit_page_length": 1},
+                timeout=10
+            )
+            items = item_resp.json().get("data", []) if item_resp.status_code == 200 else []
+
+            if items:
+                item_code = items[0].get("item_code") or items[0].get("name")
+
+                invoice_data = {
+                    "doctype": "Sales Invoice",
+                    "customer": test_customer,
+                    "company": company,
+                    "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+                }
+
+                resp = requests.post(
+                    f"{url}/api/resource/Sales Invoice",
+                    headers=headers,
+                    json=invoice_data,
+                    timeout=15
+                )
+
+                results["steps"].append({
+                    "step": "Create Test Invoice",
+                    "status_code": resp.status_code,
+                    "response": resp.json() if resp.status_code != 500 else resp.text[:1000]
+                })
+            else:
+                results["steps"].append({"step": "Create Test Invoice", "error": "No items found in system"})
+        else:
+            results["steps"].append({"step": "Create Test Invoice", "error": "No customers found"})
+    except Exception as e:
+        results["steps"].append({"step": "Create Test Invoice", "error": str(e)})
+
+    return JSONResponse(results)
+
+
 # =============================================================================
 # Customer Billing Endpoints
 # =============================================================================

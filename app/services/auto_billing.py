@@ -112,22 +112,21 @@ class AutoBillingService:
             posting_date = date.today().isoformat()
             due_date = (date.today() + timedelta(days=7)).isoformat()
 
-            # Build invoice data
+            # Build invoice data - minimal required fields
             invoice_data = {
                 "doctype": "Sales Invoice",
                 "customer": customer_name,
                 "posting_date": posting_date,
                 "due_date": due_date,
                 "company": self._company,
-                "currency": "SRD",
                 "items": [
                     {
                         "item_code": item_code,
                         "qty": 1,
-                        "rate": float(membership_type.get("price", 0))
+                        "rate": float(membership_type.get("price", 0)),
+                        "description": f"Membership: {membership_type.get('membership_name')} for {member.get('full_name')}"
                     }
-                ],
-                "remarks": f"Auto-generated invoice for {member.get('full_name')} - {membership_type.get('membership_name')}"
+                ]
             }
 
             # Create the invoice
@@ -155,8 +154,23 @@ class AutoBillingService:
                 else:
                     return True, f"Invoice {invoice_name} created (draft)", invoice_name
             else:
-                error = response.json().get("exc", response.text)
-                print(f"[Auto-Billing] Invoice creation failed: {error[:500]}")
+                # Get full error message
+                try:
+                    error_data = response.json()
+                    if "exception" in error_data:
+                        error = error_data["exception"]
+                    elif "exc" in error_data:
+                        error = error_data["exc"]
+                    elif "_server_messages" in error_data:
+                        import json as json_lib
+                        msgs = json_lib.loads(error_data["_server_messages"])
+                        error = " | ".join([json_lib.loads(m).get("message", m) if m.startswith("{") else m for m in msgs])
+                    else:
+                        error = str(error_data)
+                except:
+                    error = response.text
+
+                print(f"[Auto-Billing] Invoice creation failed for {member.get('full_name')}: {error[:1000]}")
                 return False, f"Failed to create invoice: {error[:200]}", None
 
         except Exception as e:
