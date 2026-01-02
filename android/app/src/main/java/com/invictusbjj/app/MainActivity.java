@@ -111,8 +111,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadApp() {
-        String serverUrl = BuildConfig.SERVER_URL;
-        webView.loadUrl(serverUrl);
+        // Get decrypted server URL from security config
+        String serverUrl = SecurityConfig.getServerUrl();
+
+        // Verify URL integrity before loading
+        if (SecurityConfig.verifyUrl(serverUrl)) {
+            webView.loadUrl(serverUrl);
+        } else {
+            Toast.makeText(this, "Configuration error", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
