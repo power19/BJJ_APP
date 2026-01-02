@@ -1,13 +1,205 @@
 # app/routes/billing.py
 from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 from typing import Dict, Any
 import json
 from ..services.billing_service import BillingService
+from ..services.auto_billing import get_billing_service
 from ..utils.erp_client import ERPNextClient, get_erp_client
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+
+
+# =============================================================================
+# Auto-Billing Endpoints
+# =============================================================================
+
+@router.get("/auto/preview")
+async def preview_billing():
+    """
+    Preview upcoming invoices without creating them.
+    Shows which members are due for billing and the expected amounts.
+    """
+    billing_service = get_billing_service()
+    preview = billing_service.preview_billing_cycle()
+    return JSONResponse(preview)
+
+
+@router.post("/auto/run")
+async def run_billing_cycle():
+    """
+    Run the billing cycle - generate invoices for all members due.
+    Creates Sales Invoices in ERPNext for members with recurring memberships.
+    """
+    billing_service = get_billing_service()
+    result = billing_service.run_billing_cycle()
+    return JSONResponse(result)
+
+
+@router.get("/auto/due")
+async def get_members_due():
+    """Get list of members due for billing today."""
+    billing_service = get_billing_service()
+    if not billing_service._setup_connection():
+        return JSONResponse({"success": False, "error": "ERPNext not connected"})
+
+    members = billing_service.get_members_due_for_billing()
+    return JSONResponse({
+        "success": True,
+        "count": len(members),
+        "members": members
+    })
+
+
+@router.get("/auto/test-invoice")
+async def test_invoice_creation():
+    """Test invoice creation with a single member to see detailed errors."""
+    import requests
+    from app.utils.config import get_config
+
+    config = get_config()
+    if not config.is_configured():
+        return JSONResponse({"success": False, "error": "Not configured"})
+
+    erp_config = config.get_erpnext_config()
+    url = erp_config.get('url', '')
+    headers = {
+        'Authorization': f"token {erp_config.get('api_key', '')}:{erp_config.get('api_secret', '')}",
+        'Content-Type': 'application/json'
+    }
+    company = config.get_company()
+
+    # If company not configured, fetch from ERPNext
+    if not company:
+        try:
+            resp = requests.get(
+                f"{url}/api/resource/Company",
+                headers=headers,
+                params={"fields": '["name"]', "limit_page_length": 1},
+                timeout=10
+            )
+            if resp.status_code == 200:
+                companies = resp.json().get("data", [])
+                if companies:
+                    company = companies[0].get("name")
+        except:
+            pass
+
+    results = {"steps": [], "company": company}
+
+    # Step 1: Check if Item Group "Services" exists
+    try:
+        resp = requests.get(
+            f"{url}/api/resource/Item Group/Services",
+            headers=headers,
+            timeout=10
+        )
+        results["steps"].append({
+            "step": "Check Item Group 'Services'",
+            "exists": resp.status_code == 200
+        })
+
+        if resp.status_code != 200:
+            # Try to find available item groups
+            resp2 = requests.get(
+                f"{url}/api/resource/Item Group",
+                headers=headers,
+                params={"fields": '["name"]', "limit_page_length": 20},
+                timeout=10
+            )
+            if resp2.status_code == 200:
+                results["available_item_groups"] = [g["name"] for g in resp2.json().get("data", [])]
+    except Exception as e:
+        results["steps"].append({"step": "Check Item Group", "error": str(e)})
+
+    # Step 2: Check for a test customer
+    try:
+        resp = requests.get(
+            f"{url}/api/resource/Customer",
+            headers=headers,
+            params={"fields": '["name", "customer_name"]', "limit_page_length": 1},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            customers = resp.json().get("data", [])
+            results["steps"].append({
+                "step": "Check Customers",
+                "found": len(customers),
+                "first_customer": customers[0] if customers else None
+            })
+    except Exception as e:
+        results["steps"].append({"step": "Check Customers", "error": str(e)})
+
+    # Step 3: Try to create a test invoice
+    try:
+        test_customer = results["steps"][-1].get("first_customer", {}).get("name") if results["steps"] else None
+        if test_customer:
+            # First ensure we have an item
+            item_resp = requests.get(
+                f"{url}/api/resource/Item",
+                headers=headers,
+                params={"fields": '["name", "item_code"]', "limit_page_length": 1},
+                timeout=10
+            )
+            items = item_resp.json().get("data", []) if item_resp.status_code == 200 else []
+
+            if items:
+                item_code = items[0].get("item_code") or items[0].get("name")
+
+                invoice_data = {
+                    "doctype": "Sales Invoice",
+                    "customer": test_customer,
+                    "company": company,
+                    "items": [{"item_code": item_code, "qty": 1, "rate": 100}]
+                }
+
+                resp = requests.post(
+                    f"{url}/api/resource/Sales Invoice",
+                    headers=headers,
+                    json=invoice_data,
+                    timeout=15
+                )
+
+                if resp.status_code in [200, 201]:
+                    invoice_name = resp.json().get("data", {}).get("name")
+
+                    # Try to submit the invoice
+                    submit_resp = requests.post(
+                        f"{url}/api/method/run_doc_method",
+                        headers=headers,
+                        json={"dt": "Sales Invoice", "dn": invoice_name, "method": "submit"},
+                        timeout=10
+                    )
+
+                    results["steps"].append({
+                        "step": "Create Test Invoice",
+                        "status_code": resp.status_code,
+                        "invoice_name": invoice_name,
+                        "submit_status": submit_resp.status_code,
+                        "submitted": submit_resp.status_code == 200,
+                        "submit_response": submit_resp.json() if submit_resp.status_code == 200 else submit_resp.text[:500]
+                    })
+                else:
+                    results["steps"].append({
+                        "step": "Create Test Invoice",
+                        "status_code": resp.status_code,
+                        "response": resp.json() if resp.status_code != 500 else resp.text[:1000]
+                    })
+            else:
+                results["steps"].append({"step": "Create Test Invoice", "error": "No items found in system"})
+        else:
+            results["steps"].append({"step": "Create Test Invoice", "error": "No customers found"})
+    except Exception as e:
+        results["steps"].append({"step": "Create Test Invoice", "error": str(e)})
+
+    return JSONResponse(results)
+
+
+# =============================================================================
+# Customer Billing Endpoints
+# =============================================================================
 
 @router.get("/customer/{customer_name}")
 async def get_billing_page(

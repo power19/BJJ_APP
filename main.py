@@ -4,11 +4,62 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from contextlib import asynccontextmanager
 
 from app.routes import billing, attendance, customers, files, main, payment, overview, enrollment, handover, setup, settings, promotion, members
 from app.utils.config import get_config
 
-app = FastAPI(title="Invictus BJJ")
+# Scheduler for automatic billing
+scheduler = None
+
+def run_daily_billing():
+    """Run the daily billing cycle."""
+    try:
+        from app.services.auto_billing import get_billing_service
+        billing_service = get_billing_service()
+        result = billing_service.run_billing_cycle()
+        print(f"[Auto-Billing] {result.get('message', 'Completed')}")
+        if result.get('errors'):
+            print(f"[Auto-Billing] Errors: {result['errors']}")
+    except Exception as e:
+        print(f"[Auto-Billing] Error: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events."""
+    global scheduler
+
+    # Start scheduler on startup
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.cron import CronTrigger
+
+        scheduler = BackgroundScheduler()
+        # Run billing daily at 6:00 AM
+        scheduler.add_job(
+            run_daily_billing,
+            CronTrigger(hour=6, minute=0),
+            id='daily_billing',
+            name='Daily Membership Billing',
+            replace_existing=True
+        )
+        scheduler.start()
+        print("[Scheduler] Auto-billing scheduler started (runs daily at 6:00 AM)")
+    except ImportError:
+        print("[Scheduler] APScheduler not installed, auto-billing disabled")
+    except Exception as e:
+        print(f"[Scheduler] Failed to start: {e}")
+
+    yield
+
+    # Shutdown scheduler
+    if scheduler:
+        scheduler.shutdown()
+        print("[Scheduler] Shutdown complete")
+
+
+app = FastAPI(title="Invictus BJJ", lifespan=lifespan)
 
 # Initialize templates
 templates = Jinja2Templates(directory="app/templates")

@@ -632,7 +632,8 @@
     }
 
     async function checkIn(rfid) {
-        const response = await fetch('/api/v1/attendance/check-in', {
+        // Use fast check-in endpoint for speed
+        const response = await fetch('/api/v1/attendance/fast-check-in', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ rfid_tag: rfid })
@@ -685,8 +686,8 @@
 
         showState(successState);
 
-        // Reset after 5 seconds
-        resetTimeout = setTimeout(resetToIdle, 5000);
+        // Reset after 2 seconds (fast reset for next member)
+        resetTimeout = setTimeout(resetToIdle, 2000);
     }
 
     async function showStats(rfid) {
@@ -748,8 +749,8 @@
 
         showState(statsState);
 
-        // Reset after 8 seconds
-        resetTimeout = setTimeout(resetToIdle, 8000);
+        // Reset after 4 seconds
+        resetTimeout = setTimeout(resetToIdle, 4000);
     }
 
     function showError(title, message) {
@@ -757,15 +758,23 @@
         document.getElementById('errorMessage').textContent = message;
         showState(errorState);
 
-        // Reset after 4 seconds
-        resetTimeout = setTimeout(resetToIdle, 4000);
+        // Reset after 2 seconds
+        resetTimeout = setTimeout(resetToIdle, 2000);
     }
 
-    // Keep input focused
+    // Keep input focused - always, even during success/error states
+    // This allows the next person to scan immediately
     setInterval(() => {
-        if (document.activeElement !== rfidInput && !processingState.classList.contains('hidden') === false) {
+        if (document.activeElement !== rfidInput) {
             rfidInput.focus();
         }
-    }, 1000);
+    }, 100);
+
+    // Allow scanning even while showing success/error/stats
+    // The next scan will interrupt the current display
+    rfidInput.addEventListener('focus', () => {
+        // Clear any pending reset when input gets focus
+        // (new scan is starting)
+    });
 </script>
 {% endblock %}
