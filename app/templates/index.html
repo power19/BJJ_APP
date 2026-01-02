@@ -4,11 +4,28 @@
 
 {% block styles %}
 <link href="/static/css/index.css" rel="stylesheet">
+<style>
+    .logo-container {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .home-logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 3px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="hero-section">
     <div class="container mx-auto px-4">
+        <div class="logo-container">
+            <img src="/static/images/logo.png" alt="Logo" class="home-logo" onerror="this.parentElement.style.display='none'">
+        </div>
         <h1 class="text-4xl font-bold mb-4 text-center text-white">Customer Management</h1>
         <p class="text-xl text-center mb-8 text-white">Search for customers to view their attendance and billing information</p>
         
