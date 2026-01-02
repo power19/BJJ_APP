@@ -31,6 +31,8 @@ services:
     image: bjj-app
     container_name: bjj-app
     restart: always
+    expose:
+      - "8000"
     environment:
       - TZ=America/Paramaribo
     volumes:
