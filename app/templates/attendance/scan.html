@@ -642,6 +642,12 @@
         const data = await response.json();
 
         if (!data.success && !data.already_checked_in) {
+            // Special handling for payment blocked
+            if (data.blocked || response.status === 402) {
+                showPaymentBlocked(data.member_name, data.days_overdue, data.error);
+                return;
+            }
+
             showError(
                 data.error === 'Member not found' ? 'Card Not Found' : 'Check-in Failed',
                 data.error || 'Please try again'
@@ -760,6 +766,27 @@
 
         // Reset after 2 seconds
         resetTimeout = setTimeout(resetToIdle, 2000);
+    }
+
+    function showPaymentBlocked(memberName, daysOverdue, errorMessage) {
+        // Show a specific payment blocked message
+        document.getElementById('errorTitle').textContent = 'Payment Required';
+        document.getElementById('errorMessage').innerHTML = `
+            <strong style="font-size: 1.25rem; display: block; margin-bottom: 0.5rem; color: #f87171;">${memberName || 'Member'}</strong>
+            <span style="color: #fca5a5;">Balance overdue: ${daysOverdue || '15+'} days</span>
+            <br><br>
+            <span style="color: #94a3b8; font-size: 0.875rem;">Please settle balance at reception</span>
+        `;
+
+        // Change error state styling temporarily for payment blocked
+        errorState.style.background = 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)';
+        showState(errorState);
+
+        // Reset after 4 seconds (longer for payment message)
+        resetTimeout = setTimeout(() => {
+            resetToIdle();
+            errorState.style.background = '';
+        }, 4000);
     }
 
     // Keep input focused - always, even during success/error states

@@ -242,13 +242,47 @@ async def check_in_member(request: Request):
         member = members[0]
         member_id = member["name"]
 
+        full_name = member.get("full_name") or f"{member.get('first_name', '')} {member.get('last_name', '')}".strip()
+
         # Check member status
         if member.get("status") != "Active":
             return JSONResponse({
                 "success": False,
                 "error": f"Member status is {member.get('status')}",
-                "member_name": member.get("full_name") or f"{member.get('first_name', '')} {member.get('last_name', '')}".strip()
+                "member_name": full_name
             }, status_code=400)
+
+        # Check for overdue payment > 15 days
+        if member.get("payment_status") == "Overdue":
+            try:
+                invoice_response = requests.get(
+                    f"{url}/api/resource/Sales Invoice",
+                    headers=headers,
+                    params={
+                        "filters": f'[["customer", "=", "{member_id}"], ["outstanding_amount", ">", 0], ["docstatus", "=", 1]]',
+                        "fields": '["name", "posting_date", "outstanding_amount"]',
+                        "order_by": "posting_date asc",
+                        "limit_page_length": 1
+                    },
+                    timeout=10
+                )
+
+                if invoice_response.status_code == 200:
+                    invoices = invoice_response.json().get("data", [])
+                    if invoices:
+                        oldest_invoice_date = datetime.strptime(invoices[0]["posting_date"], "%Y-%m-%d").date()
+                        days_overdue = (date.today() - oldest_invoice_date).days
+
+                        if days_overdue > 15:
+                            return JSONResponse({
+                                "success": False,
+                                "error": f"Payment overdue ({days_overdue} days). Please settle balance.",
+                                "member_name": full_name,
+                                "days_overdue": days_overdue,
+                                "blocked": True
+                            }, status_code=402)
+            except Exception as e:
+                print(f"Error checking overdue invoices: {e}")
 
         # Check if already checked in today
         today = date.today().isoformat()
@@ -423,6 +457,40 @@ async def fast_check_in(request: Request, background_tasks: BackgroundTasks):
                 "error": f"Member {member.get('status', 'inactive')}",
                 "member_name": full_name
             }, status_code=400)
+
+        # Check for overdue payment > 15 days
+        if member.get("payment_status") == "Overdue":
+            try:
+                # Check oldest unpaid invoice
+                invoice_response = requests.get(
+                    f"{url}/api/resource/Sales Invoice",
+                    headers=headers,
+                    params={
+                        "filters": f'[["customer", "=", "{member_id}"], ["outstanding_amount", ">", 0], ["docstatus", "=", 1]]',
+                        "fields": '["name", "posting_date", "outstanding_amount"]',
+                        "order_by": "posting_date asc",
+                        "limit_page_length": 1
+                    },
+                    timeout=5
+                )
+
+                if invoice_response.status_code == 200:
+                    invoices = invoice_response.json().get("data", [])
+                    if invoices:
+                        oldest_invoice_date = datetime.strptime(invoices[0]["posting_date"], "%Y-%m-%d").date()
+                        days_overdue = (date.today() - oldest_invoice_date).days
+
+                        if days_overdue > 15:
+                            return JSONResponse({
+                                "success": False,
+                                "error": f"Payment overdue ({days_overdue} days). Please settle balance.",
+                                "member_name": full_name,
+                                "days_overdue": days_overdue,
+                                "blocked": True
+                            }, status_code=402)  # 402 Payment Required
+            except Exception as e:
+                print(f"Error checking overdue invoices: {e}")
+                # Continue with check-in if invoice check fails
 
         # Check if already checked in today (quick check)
         existing = requests.get(
