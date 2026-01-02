@@ -1,6 +1,6 @@
 // Top-level build file for Invictus BJJ Android App
 plugins {
-    id 'com.android.application' version '8.2.0' apply false
+    id 'com.android.application' version '8.3.2' apply false
 }
 
 task clean(type: Delete) {
