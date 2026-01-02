@@ -226,6 +226,41 @@ async def member_detail_page(request: Request, member_id: str):
     )
 
 
+@router.get("/{member_id}/edit")
+async def member_edit_page(request: Request, member_id: str):
+    """Render the member edit page."""
+    url, headers, connected = get_erpnext_client()
+
+    member = None
+
+    if connected:
+        try:
+            # Fetch member details
+            resp = requests.get(
+                f"{url}/api/resource/Gym Member/{member_id}",
+                headers=headers,
+                timeout=10
+            )
+            if resp.status_code == 200:
+                member = resp.json().get("data", {})
+
+        except Exception as e:
+            print(f"Error fetching member: {e}")
+
+    if not member:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/members", status_code=302)
+
+    return templates.TemplateResponse(
+        "members/edit.html",
+        {
+            "request": request,
+            "connected": connected,
+            "member": member
+        }
+    )
+
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -253,6 +288,24 @@ class EnrollmentRequest(BaseModel):
     rfid_tag: Optional[str] = None
     membership_type: Optional[str] = None
     photo: Optional[str] = None
+
+
+class MemberUpdateRequest(BaseModel):
+    """Request to update member details."""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    rfid_tag: Optional[str] = None
+    guardian_name: Optional[str] = None
+    guardian_phone: Optional[str] = None
+    guardian_email: Optional[str] = None
+    guardian_relationship: Optional[str] = None
 
 
 class StatusUpdateRequest(BaseModel):
@@ -521,6 +574,140 @@ async def check_rfid(rfid_tag: str):
                 })
 
         return JSONResponse({"success": True, "in_use": False})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.put("/api/{member_id}/update")
+async def update_member(member_id: str, req: MemberUpdateRequest):
+    """Update a member's details."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    try:
+        # Build update data from non-None fields
+        update_data = {}
+
+        if req.first_name is not None:
+            update_data["first_name"] = req.first_name
+        if req.last_name is not None:
+            update_data["last_name"] = req.last_name
+        if req.first_name is not None or req.last_name is not None:
+            # Need to fetch current values if only one is provided
+            if req.first_name is None or req.last_name is None:
+                current = requests.get(
+                    f"{url}/api/resource/Gym Member/{member_id}",
+                    headers=headers,
+                    params={"fields": '["first_name", "last_name"]'},
+                    timeout=10
+                )
+                if current.status_code == 200:
+                    data = current.json().get("data", {})
+                    first = req.first_name or data.get("first_name", "")
+                    last = req.last_name or data.get("last_name", "")
+                    update_data["full_name"] = f"{first} {last}"
+            else:
+                update_data["full_name"] = f"{req.first_name} {req.last_name}"
+
+        if req.phone is not None:
+            update_data["phone"] = req.phone
+        if req.email is not None:
+            update_data["email"] = req.email
+        if req.date_of_birth is not None:
+            update_data["date_of_birth"] = req.date_of_birth if req.date_of_birth else None
+        if req.gender is not None:
+            update_data["gender"] = req.gender
+        if req.address is not None:
+            update_data["address"] = req.address
+        if req.emergency_contact is not None:
+            update_data["emergency_contact"] = req.emergency_contact
+        if req.emergency_phone is not None:
+            update_data["emergency_phone"] = req.emergency_phone
+        if req.rfid_tag is not None:
+            update_data["rfid_tag"] = req.rfid_tag
+        if req.guardian_name is not None:
+            update_data["guardian_name"] = req.guardian_name
+        if req.guardian_phone is not None:
+            update_data["guardian_phone"] = req.guardian_phone
+        if req.guardian_email is not None:
+            update_data["guardian_email"] = req.guardian_email
+        if req.guardian_relationship is not None:
+            update_data["guardian_relationship"] = req.guardian_relationship
+
+        if not update_data:
+            return JSONResponse({
+                "success": False,
+                "error": "No fields to update"
+            }, status_code=400)
+
+        resp = requests.put(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            json=update_data,
+            timeout=15
+        )
+
+        if resp.status_code == 200:
+            return JSONResponse({
+                "success": True,
+                "message": "Member updated successfully"
+            })
+        else:
+            error_msg = resp.json().get("exc", resp.text)
+            if "Duplicate" in str(error_msg) and "rfid" in str(error_msg).lower():
+                return JSONResponse({
+                    "success": False,
+                    "error": "This RFID tag is already assigned to another member"
+                }, status_code=400)
+            return JSONResponse({
+                "success": False,
+                "error": f"Failed to update member: {str(error_msg)[:200]}"
+            }, status_code=400)
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@router.delete("/api/{member_id}/delete")
+async def delete_member(member_id: str):
+    """Delete a member."""
+    url, headers, connected = get_erpnext_client()
+
+    if not connected:
+        return JSONResponse({"success": False, "error": "ERPNext not connected"}, status_code=503)
+
+    try:
+        resp = requests.delete(
+            f"{url}/api/resource/Gym Member/{member_id}",
+            headers=headers,
+            timeout=15
+        )
+
+        if resp.status_code == 200:
+            return JSONResponse({
+                "success": True,
+                "message": "Member deleted successfully"
+            })
+        elif resp.status_code == 404:
+            return JSONResponse({
+                "success": False,
+                "error": "Member not found"
+            }, status_code=404)
+        else:
+            error_msg = resp.json().get("exc", resp.text)
+            # Check for linked records
+            if "Cannot delete" in str(error_msg) or "linked" in str(error_msg).lower():
+                return JSONResponse({
+                    "success": False,
+                    "error": "Cannot delete member with linked records (attendance, payments, etc.). Consider marking as Cancelled instead."
+                }, status_code=400)
+            return JSONResponse({
+                "success": False,
+                "error": f"Failed to delete member: {str(error_msg)[:200]}"
+            }, status_code=400)
 
     except Exception as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)
