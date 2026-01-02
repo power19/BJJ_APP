@@ -159,26 +159,38 @@ class AutoBillingService:
                 result = response.json()
                 invoice_name = result.get("data", {}).get("name")
 
-                # Submit the invoice using frappe.client.submit
+                # Submit the invoice using run_doc_method
                 submit_response = requests.post(
-                    f"{self._url}/api/method/frappe.client.submit",
+                    f"{self._url}/api/method/run_doc_method",
                     headers=self._headers,
-                    json={"doc": {"doctype": "Sales Invoice", "name": invoice_name}},
+                    json={
+                        "dt": "Sales Invoice",
+                        "dn": invoice_name,
+                        "method": "submit"
+                    },
                     timeout=10
                 )
 
                 if submit_response.status_code == 200:
                     return True, f"Invoice {invoice_name} created and submitted", invoice_name
                 else:
-                    # Try alternative method
-                    submit_response2 = requests.post(
-                        f"{self._url}/api/method/frappe.client.submit",
+                    # Try frappe.client.submit with full doc fetch
+                    get_doc = requests.get(
+                        f"{self._url}/api/resource/Sales Invoice/{invoice_name}",
                         headers=self._headers,
-                        json={"doctype": "Sales Invoice", "name": invoice_name},
                         timeout=10
                     )
-                    if submit_response2.status_code == 200:
-                        return True, f"Invoice {invoice_name} created and submitted", invoice_name
+                    if get_doc.status_code == 200:
+                        doc = get_doc.json().get("data", {})
+                        doc["docstatus"] = 1
+                        submit_response2 = requests.post(
+                            f"{self._url}/api/method/frappe.client.submit",
+                            headers=self._headers,
+                            json={"doc": doc},
+                            timeout=10
+                        )
+                        if submit_response2.status_code == 200:
+                            return True, f"Invoice {invoice_name} created and submitted", invoice_name
 
                     print(f"[Auto-Billing] Submit failed: {submit_response.text[:200]}")
                     return True, f"Invoice {invoice_name} created (draft - submit failed)", invoice_name

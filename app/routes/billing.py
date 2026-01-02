@@ -162,11 +162,31 @@ async def test_invoice_creation():
                     timeout=15
                 )
 
-                results["steps"].append({
-                    "step": "Create Test Invoice",
-                    "status_code": resp.status_code,
-                    "response": resp.json() if resp.status_code != 500 else resp.text[:1000]
-                })
+                if resp.status_code in [200, 201]:
+                    invoice_name = resp.json().get("data", {}).get("name")
+
+                    # Try to submit the invoice
+                    submit_resp = requests.post(
+                        f"{url}/api/method/run_doc_method",
+                        headers=headers,
+                        json={"dt": "Sales Invoice", "dn": invoice_name, "method": "submit"},
+                        timeout=10
+                    )
+
+                    results["steps"].append({
+                        "step": "Create Test Invoice",
+                        "status_code": resp.status_code,
+                        "invoice_name": invoice_name,
+                        "submit_status": submit_resp.status_code,
+                        "submitted": submit_resp.status_code == 200,
+                        "submit_response": submit_resp.json() if submit_resp.status_code == 200 else submit_resp.text[:500]
+                    })
+                else:
+                    results["steps"].append({
+                        "step": "Create Test Invoice",
+                        "status_code": resp.status_code,
+                        "response": resp.json() if resp.status_code != 500 else resp.text[:1000]
+                    })
             else:
                 results["steps"].append({"step": "Create Test Invoice", "error": "No items found in system"})
         else:
