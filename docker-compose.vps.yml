@@ -1,0 +1,46 @@
+# BJJ App Service Configuration
+# Add this to your main pwd.yml (docker-compose file)
+
+# Add to services section:
+#
+#   bjj-app:
+#     build: /home/ubuntu/docker/bjj-app
+#     image: bjj-app
+#     restart: always
+#     environment:
+#       - TZ=America/Paramaribo
+#     volumes:
+#       - /home/ubuntu/docker/bjj-app/config:/app/config
+#       - /home/ubuntu/docker/bjj-app/data:/app/data
+
+# Add to nginx-proxy volumes:
+#     - /home/ubuntu/docker/frappe_docker/bjj.conf:/etc/nginx/conf.d/bjj.conf:ro
+#     - ./cert/bjj.powermental.online.pem:/etc/ssl/cloudflare/bjj.powermental.online.crt:ro
+#     - ./cert/bjj.powermental.online.key:/etc/ssl/cloudflare/bjj.powermental.online.key:ro
+
+# =============================================================================
+# Full service block to copy into pwd.yml:
+# =============================================================================
+
+services:
+  bjj-app:
+    build: /home/ubuntu/docker/bjj-app
+    image: bjj-app
+    container_name: bjj-app
+    restart: always
+    environment:
+      - TZ=America/Paramaribo
+    volumes:
+      - bjj-config:/app/config
+      - bjj-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Add to volumes section:
+volumes:
+  bjj-config:
+  bjj-data:

@@ -75,6 +75,25 @@
             color: #f1f5f9;
         }
 
+        .edit-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+        }
+
         /* Profile card */
         .profile-card {
             background: rgba(30, 41, 59, 0.6);
@@ -550,6 +569,15 @@
                 </svg>
             </a>
             <h1>Member Details</h1>
+            {% if member %}
+            <a href="/members/{{ member.name }}/edit" class="edit-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Edit
+            </a>
+            {% endif %}
         </header>
 
         {% if member %}
